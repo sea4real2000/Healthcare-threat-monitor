@@ -143,6 +143,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check the appliance scripts
         run: |
+          sudo apt-get update -q && sudo apt-get install -y -q shellcheck libxml2-utils
           shellcheck -S warning appliance/build.sh appliance/files/bin/*
           python3 -m py_compile appliance/boot_test.py
           xmllint --noout appliance/files/appliance.ovf
@@ -177,6 +178,13 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "install.ps1 failed with $LASTEXITCODE" }
       - name: Make events, run the scheduled task, and check what arrived
         run: |
+          trap {
+            # Shown as an annotation on the commit, so the reason is visible without opening the log.
+            $log = Join-Path $env:ProgramData 'HealthcareThreatMonitor\collector.log'
+            $tail = if (Test-Path $log) { (Get-Content $log -Tail 5) -join ' | ' } else { 'no collector.log' }
+            Write-Host "::error title=Windows collector check::$($_.Exception.Message) Collector log: $tail"
+            exit 1
+          }
           # A failed sign in, and a process with a command line the platform should see.
           Add-Type -Namespace Ci -Name Logon -MemberDefinition '[DllImport("advapi32.dll", SetLastError = true)] public static extern bool LogonUser(string user, string domain, string password, int type, int provider, out IntPtr token);'
           $token = [IntPtr]::Zero
