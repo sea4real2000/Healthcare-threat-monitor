@@ -16,7 +16,7 @@ jobs:
         working-directory: web
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -78,7 +78,7 @@ jobs:
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/lockdown.sql
       - name: The audit log refuses and detects tampering
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/audit_chain.sql
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
