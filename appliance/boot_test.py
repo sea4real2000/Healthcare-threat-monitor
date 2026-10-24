@@ -171,7 +171,8 @@ def first_visit(base, code):
         pg = ctx.new_page()
         # Anything the browser could not load is reported, as a sign of what a person would see broken.
         failed = []
-        pg.on('requestfailed', lambda r: failed.append(f'{r.url} ({r.failure})'))
+        # ERR_ABORTED is a request the browser itself dropped because a newer navigation replaced it: normal.
+        pg.on('requestfailed', lambda r: None if 'ERR_ABORTED' in (r.failure or '') else failed.append(f'{r.url} ({r.failure})'))
         pg.goto(base + '/', wait_until='domcontentloaded'); ok('the first visit goes straight to setting up the administrator', pg.url.endswith('/welcome'), pg.url)
         pg.fill('input[name=code]', 'ABCDE FGHJK'); pg.fill('input[name=name]', 'Ada Obi'); pg.fill('input[name=email]', 'ada@hospital.example')
         pg.click('button[type=submit]'); arrive(pg, 'error=code')
