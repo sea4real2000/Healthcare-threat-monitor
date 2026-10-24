@@ -1,12 +1,18 @@
 # Builds the appliance for each version, tests it by starting it, and attaches the downloads to the release.
 # Runs when a release is published on GitHub (Releases, Draft a new release, a new tag such as v0.8.0,
-# Publish release). Can also be started by hand from the Actions tab, which builds and tests without publishing.
+# Publish release). Can also be started by hand from the Actions tab: it builds and tests, and attaches the
+# downloads to an existing release when its tag is given.
 name: release
 
 on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Attach the downloads to this existing release (its tag, such as 1.0). Leave empty to build and test only."
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -38,6 +44,11 @@ jobs:
       - name: Build the appliance
         run: sudo KEEP_RAW=1 appliance/build.sh dist
 
+      # Ubuntu's own Python refuses packages installed with pip, so the tests get their own.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Start the virtual machine and set it up in a browser, with BIOS
         run: |
           pip install playwright==1.48.0
@@ -62,7 +73,8 @@ jobs:
           retention-days: 14
 
       - name: Attach the downloads to the release
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || inputs.release_tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" dist/* --clobber
+          TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
+        run: gh release upload "$TAG" dist/* --clobber

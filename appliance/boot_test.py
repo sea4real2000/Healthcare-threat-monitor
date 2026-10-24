@@ -28,10 +28,18 @@ work = tempfile.mkdtemp(prefix='htm-boot-')
 fails = []
 
 
+def annotate(message):
+    """On GitHub, a failure is also shown as an annotation, readable without opening the log."""
+    if os.environ.get('GITHUB_ACTIONS'):
+        text = str(message).replace('%', '%25').replace('\r', '').replace('\n', '%0A')
+        print(f'::error title=Appliance test::{text[-3500:]}', flush=True)
+
+
 def ok(name, cond, detail=''):
     print(('PASS ' if cond else 'FAIL ') + name + ('' if cond or not detail else f'  [{detail}]'), flush=True)
     if not cond:
         fails.append(name)
+        annotate(f'{name} {detail}')
 
 
 def qemu(disks, serial_log, usb=None):
@@ -195,7 +203,9 @@ def appliance_check(disk, label):
         m = wait_serial(log, r'Setup code:\s+([A-Z0-9]{5} [A-Z0-9]{5})', BOOT_TIMEOUT, proc)
         ok(f'{label}: the screen shows the setup code', bool(m))
         if not m:
-            print(open(log, errors='replace').read()[-4000:])
+            tail = open(log, errors='replace').read()[-4000:]
+            print(tail)
+            annotate('The setup code never appeared. End of the serial console: ' + tail[-2500:])
             return
         text = open(log, errors='replace').read()
         ok(f'{label}: the screen says it is running', 'Running.' in text)
@@ -250,6 +260,11 @@ try:
             stop(proc)
         if not fails:
             appliance_check(target, 'installed computer')
+except Exception as error:
+    fails.append(f'the test stopped: {error}')
+    annotate(f'The test stopped: {type(error).__name__}: {error}')
+    for serial in sorted(p for p in os.listdir(work) if p.endswith('.serial')):
+        annotate(f'End of {serial}: ' + open(os.path.join(work, serial), errors='replace').read()[-2500:])
 finally:
     if KEEP:
         print('kept', work)
