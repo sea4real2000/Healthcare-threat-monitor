@@ -1,0 +1,7 @@
+{
+  "note": "Sealed by web/lib/crypto.ts with the secret below. Both languages must unseal it. A test value only, never a real secret.",
+  "secret": "shared_vector_secret_0123456789abcdef0123",
+  "purpose": "record_source",
+  "sealed": "v1.vXRdN/Lt+vI3C4X/.tOEWJpevaxNzAoXAwWx/ZQ==.mGE5Lxwn9wThI4VnPW2BV7nsHTo6id4=",
+  "plain": "Example password, 2026!"
+}

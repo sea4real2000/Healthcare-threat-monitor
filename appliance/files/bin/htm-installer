@@ -1,0 +1,83 @@
+#!/bin/bash
+# Healthcare Threat Monitor USB installer: copies the platform onto this computer's own disk.
+# Runs on the screen of a computer started from the USB stick. Nothing is erased without typing ERASE.
+set -u -o pipefail
+boot_root=$(findmnt -no SOURCE /)
+boot_dev=$(basename "$(readlink -f "$boot_root")")
+boot_disk=/dev/$(basename "$(readlink -f "/sys/class/block/$boot_dev/..")")
+say() { echo "  $*"; }
+# A computer without a screen may have a serial console. It is told what the installer is waiting for.
+serial() { [ -c /dev/ttyS0 ] && echo "htm-installer: $*" > /dev/ttyS0 2>/dev/null || true; }
+while true; do
+  clear
+  echo
+  say "Healthcare Threat Monitor installer $(cat /opt/htm/VERSION 2>/dev/null)"
+  say "================================================================"
+  echo
+  say "This puts the platform on this computer's own disk, so it starts by itself from now on."
+  echo
+  mapfile -t disks < <(lsblk -dnpo NAME,SIZE,TYPE,RO,MODEL | awk -v boot="$boot_disk" '$3 == "disk" && $4 == "0" && $1 != boot')
+  if [ ${#disks[@]} -eq 0 ]; then
+    say "No disk was found to install on, apart from this USB stick."
+    say "Check the computer's disk, then press Enter to look again."
+    read -r _
+    continue
+  fi
+  say "Disks on this computer:"
+  echo
+  for i in "${!disks[@]}"; do
+    say "  $((i + 1)).  $(echo "${disks[$i]}" | awk '{ $3 = ""; $4 = ""; print }')"
+  done
+  echo
+  serial "waiting for a disk number, $(printf "%s\n" "${disks[@]}" | awk '{print $1}' | xargs)"
+  read -r -p "  Type the number of the disk to install on, then press Enter: " choice
+  case "$choice" in ''|*[!0-9]*) continue ;; esac
+  [ "$choice" -ge 1 ] && [ "$choice" -le ${#disks[@]} ] || continue
+  target=$(echo "${disks[$((choice - 1))]}" | awk '{print $1}')
+  size_bytes=$(lsblk -dnbo SIZE "$target")
+  if [ "$size_bytes" -lt 21474836480 ]; then
+    say "That disk is smaller than 20 GB. The platform needs at least 20 GB. Press Enter."
+    read -r _
+    continue
+  fi
+  echo
+  say "EVERYTHING on $target ($(echo "${disks[$((choice - 1))]}" | awk '{ $1 = ""; $3 = ""; $4 = ""; print }' | xargs)) will be erased."
+  serial "waiting for ERASE to install on $target"
+  read -r -p "  To erase it and install, type ERASE and press Enter. To go back, just press Enter: " answer
+  [ "$answer" = "ERASE" ] || continue
+  echo
+  say "Installing. This takes a few minutes. Do not remove the USB stick."
+  # The stick's own system is copied as it is. It runs read only, so it is never changed and copies cleanly.
+  sync
+  if [ "$(findmnt -no OPTIONS / | cut -d, -f1)" != "ro" ] && ! mount -o remount,ro /; then
+    serial "failed: the USB stick's system could not be made read only"
+    say "Could not prepare the USB stick. Restart the computer from it and try again. Press Enter."; read -r _; continue
+  fi
+  end=$(( $(partx -go END -n 3 "$boot_disk") + 1 ))
+  if ! dd if="$boot_disk" of="$target" bs=4M count="$(( end * 512 ))" iflag=fullblock,count_bytes oflag=direct status=progress 2>&1 | tr '\r' '\n' | tail -n 1; then
+    serial "failed: copying to $target"
+    say "Copying failed. The disk may be faulty. Press Enter."; read -r _; continue
+  fi
+  sync
+  sgdisk -e "$target" >/dev/null 2>&1
+  partprobe "$target" 2>/dev/null; sleep 2
+  part=$(lsblk -lnpo NAME "$target" | sed -n 4p)
+  mkdir -p /run/htm-target
+  if mount "$part" /run/htm-target; then
+    # The copy on the disk is the platform itself, not another installer: writable, with its own identity.
+    rm -f /run/htm-target/etc/htm/installer /run/htm-target/etc/systemd/journald.conf.d/htm-installer.conf
+    cp /etc/htm/fstab.installed /run/htm-target/etc/fstab
+    : > /run/htm-target/etc/machine-id
+    umount /run/htm-target
+  else
+    serial "failed: the copy on $target could not be opened"
+    say "The copy could not be checked. Press Enter."; read -r _; continue
+  fi
+  echo
+  serial "installed on $target"
+  say "Installed on $target."
+  say "Remove the USB stick, then press Enter to restart. The platform starts by itself."
+  read -r _
+  systemctl reboot
+  exit 0
+done

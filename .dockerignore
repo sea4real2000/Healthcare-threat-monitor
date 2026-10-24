@@ -1,0 +1,9 @@
+**/node_modules
+**/.next
+**/.env
+**/.env.*
+**/__pycache__
+**/*.zip
+.git
+engine/runs
+web/tests

@@ -1,0 +1,31 @@
+{
+  "note": "Shared examples for web/lib/records.ts and engine/connectors/records_convert.py. Both must give these exact results.",
+  "options": { "sourceName": "Records database", "idPrefix": "test" },
+  "cases": [
+    { "row": { "time": "2026-03-10 14:05:09", "user": "Nurse.Ade", "patient": "P1001", "action": "View chart", "outcome": "Success", "workstation": "10.4.2.17", "record_id": "88" },
+      "timezone": "Africa/Lagos", "dayFirst": true,
+      "expect": { "id": "test-88", "recorded": "2026-03-10T13:05:09.000Z", "action": "R", "outcome": "0", "user": "nurse.ade", "address": "10.4.2.17" } },
+    { "row": { "time": "10/03/2026 2:05 PM", "user": "dr_bello", "patient": "P2", "action": "Edit note", "outcome": "denied" },
+      "timezone": "UTC", "dayFirst": true,
+      "expect": { "recorded": "2026-03-10T14:05:00.000Z", "action": "U", "outcome": "8", "user": "dr_bello", "address": null } },
+    { "row": { "time": "03/10/2026 14:05", "user": "x", "patient": "P3" },
+      "timezone": "America/Chicago", "dayFirst": false,
+      "expect": { "recorded": "2026-03-10T19:05:00.000Z", "action": "R", "outcome": null } },
+    { "row": { "time": "2026-07-01T08:00:00+01:00", "user": "x", "patient": "P4", "action": "insert" },
+      "timezone": "America/Chicago", "dayFirst": true,
+      "expect": { "recorded": "2026-07-01T07:00:00.000Z", "action": "C" } },
+    { "row": { "time": "2026-11-01 01:30:00", "user": "x", "patient": "P5", "action": "delete record" },
+      "timezone": "Europe/London", "dayFirst": true,
+      "expect": { "recorded": "2026-11-01T01:30:00.000Z", "action": "D" } },
+    { "row": { "time": "1767225600", "user": "x", "patient": "P6", "workstation": "WSED007" },
+      "timezone": "UTC", "dayFirst": true, "assetIps": { "WSED007": "10.1.0.7" },
+      "expect": { "recorded": "2026-01-01T00:00:00.000Z", "address": "10.1.0.7" } },
+    { "row": { "time": "2026-02-02 09:00", "user": "u", "patient": "P7" }, "timezone": "UTC", "dayFirst": true,
+      "expect": { "id": "test-304520d493cc50909524dfbd" } },
+    { "row": { "time": "", "user": "x", "patient": "P8" }, "timezone": "UTC", "dayFirst": true, "error": "missing_time" },
+    { "row": { "time": "yesterday", "user": "x", "patient": "P9" }, "timezone": "UTC", "dayFirst": true, "error": "bad_time" },
+    { "row": { "time": "2026-02-30 09:00", "user": "x", "patient": "P9" }, "timezone": "UTC", "dayFirst": true, "error": "bad_time" },
+    { "row": { "time": "2026-02-02 09:00", "user": " ", "patient": "P10" }, "timezone": "UTC", "dayFirst": true, "error": "missing_user" },
+    { "row": { "time": "2026-02-02 09:00", "user": "x", "patient": "" }, "timezone": "UTC", "dayFirst": true, "error": "missing_patient" }
+  ]
+}

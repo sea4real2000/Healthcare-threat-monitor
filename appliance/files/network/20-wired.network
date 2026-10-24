@@ -1,0 +1,6 @@
+# Every wired network card asks the network for an address.
+[Match]
+Name=en* eth*
+
+[Network]
+DHCP=yes

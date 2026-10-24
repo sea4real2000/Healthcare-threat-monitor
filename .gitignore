@@ -1,0 +1,19 @@
+node_modules/
+.next/
+next-env.d.ts
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+.venv/
+engine/runs/
+*.egg-info/
+*.log
+.DS_Store
+engine/worker.env
+
+# Build output of the Windows collector tests
+web/collectors/windows/tests/bin/
+web/collectors/windows/tests/obj/

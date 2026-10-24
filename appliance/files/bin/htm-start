@@ -1,0 +1,20 @@
+#!/bin/sh
+# Healthcare Threat Monitor appliance: starts the platform at this computer's address.
+set -eu
+cd /opt/htm
+ip=""
+for _ in $(seq 1 120); do
+  ip=$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p')
+  [ -n "$ip" ] && break
+  ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+  [ -n "$ip" ] && break
+  sleep 1
+done
+[ -n "$ip" ] || { echo "htm-start: no network address after two minutes"; exit 1; }
+mkdir -p /var/lib/htm
+previous=$(cat /var/lib/htm/address 2>/dev/null || true)
+[ -n "$previous" ] && [ "$previous" != "$ip" ] && echo "$previous" > /var/lib/htm/previous-address
+echo "$ip" > /var/lib/htm/address
+# Docker Compose reads this file. The address is what staff type, and what the HTTPS certificate is made for.
+printf 'HTM_HOSTNAME=%s\nCOMPOSE_FILE=docker-compose.hospital.yml\n' "$ip" > /opt/htm/.env
+exec docker compose up -d --no-build --pull never --remove-orphans

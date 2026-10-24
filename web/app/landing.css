@@ -1,0 +1,786 @@
+/* The public landing page. Uses the same tokens as the console. */
+.land {
+  --wrap: 1120px;
+  background: var(--paper);
+  color: var(--ink);
+  overflow-x: hidden;
+}
+
+.land .wrap {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 0 var(--s5);
+}
+
+.land h1,
+.land h2,
+.land h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+.land h2 {
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.land h2 span,
+.land h1 span {
+  display: block;
+  color: var(--mark);
+}
+
+.land p {
+  margin: 0;
+}
+
+.land-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s4) 0;
+  flex-wrap: wrap;
+}
+
+.land-brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--step-3);
+  color: var(--ink);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.land-brand svg {
+  color: var(--mark);
+}
+
+.land-top-facts {
+  display: flex;
+  align-items: center;
+  gap: var(--s5);
+  flex-wrap: wrap;
+  font-size: var(--step-1);
+  color: var(--ink-2);
+}
+
+.land-top-facts strong {
+  display: block;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.pill {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--step-1);
+  text-decoration: none;
+  padding: 10px 22px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 1.5px solid var(--accent);
+}
+
+.pill-ghost {
+  background: transparent;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+.pill-light {
+  background: #ffffff;
+  color: #0a1a4a;
+  border-color: #ffffff;
+}
+
+.land-nav {
+  background: var(--band-to);
+  border-radius: var(--radius-small);
+  padding: 6px;
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
+}
+
+.land-nav a {
+  color: #ffffff;
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--step-1);
+  padding: 8px 16px;
+  border-radius: 8px;
+}
+
+.land-nav a:first-child {
+  background: #ffffff;
+  color: #0a1a4a;
+}
+
+.land-nav a:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.land-nav a:first-child:hover {
+  background: #ffffff;
+}
+
+.hero {
+  background: var(--rail);
+  color: #ffffff;
+  margin-top: -22px;
+  padding: 72px 0 136px;
+  border-radius: 0 0 50% 50% / 0 0 90px 90px;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: var(--s7);
+  align-items: center;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--step-1);
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-wash);
+  color: var(--link);
+  margin-bottom: var(--s3);
+}
+
+.hero .tag {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.hero h1 {
+  font-size: clamp(2.1rem, 4.6vw, 3.35rem);
+  font-weight: 700;
+  line-height: 1.08;
+}
+
+.hero h1 span {
+  color: #5c9dff;
+}
+
+.hero-copy p {
+  margin-top: var(--s4);
+  color: #c9d5f5;
+  max-width: 54ch;
+  font-size: 1.02rem;
+}
+
+.hero-actions {
+  display: flex;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  margin-top: var(--s5);
+}
+
+/* The live monitor stands where a photograph would. It shows real numbers from the running platform. */
+.monitor {
+  background: #0d2577;
+  border: 1px solid #2743a3;
+  border-radius: 20px;
+  padding: var(--s5);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+.monitor-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--step-1);
+  color: #b9c7f0;
+  margin-bottom: var(--s4);
+}
+
+.monitor-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.monitor-live i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #58d68d;
+}
+
+.monitor-live.off i {
+  background: #f0857b;
+}
+
+.monitor svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.monitor svg rect {
+  fill: #4c8ff8;
+}
+
+.monitor dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s3);
+  margin: var(--s4) 0 0;
+}
+
+.monitor dt {
+  font-size: var(--step-1);
+  color: #b9c7f0;
+}
+
+.monitor dd {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.feature-band {
+  margin-top: -96px;
+  position: relative;
+  z-index: 1;
+}
+
+.feature-band-inner {
+  background: linear-gradient(100deg, var(--band-from), var(--band-to));
+  color: #ffffff;
+  border-radius: 20px;
+  padding: var(--s6);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s6);
+  box-shadow: 0 18px 40px rgba(22, 104, 242, 0.28);
+}
+
+.feature-band h3 {
+  font-size: var(--step-3);
+  margin: var(--s3) 0 var(--s1);
+}
+
+.feature-band p {
+  color: #e0eaff;
+  font-size: var(--step-2);
+}
+
+.icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--band-from);
+  display: grid;
+  place-items: center;
+}
+
+.land .land-section {
+  margin-top: 88px;
+}
+
+.section-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: var(--s6);
+  align-items: center;
+  margin-bottom: var(--s6);
+}
+
+.section-head p {
+  color: var(--ink-2);
+}
+
+.section-head.center {
+  display: block;
+  text-align: center;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-head.center p {
+  margin-top: var(--s3);
+}
+
+.watch-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s4);
+}
+
+.watch-card {
+  background: var(--surface);
+  border-radius: 18px;
+  padding: var(--s5);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line-soft);
+}
+
+.watch-card .icon {
+  background: var(--accent-wash);
+  color: var(--mark);
+  margin-bottom: var(--s4);
+}
+
+.watch-card h3 {
+  font-size: var(--step-3);
+  margin-bottom: var(--s2);
+}
+
+.watch-card p {
+  color: var(--ink-2);
+  font-size: var(--step-2);
+}
+
+.how-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--s6);
+  align-items: start;
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s3);
+  counter-reset: step;
+}
+
+.steps li {
+  counter-increment: step;
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  padding: var(--s4) var(--s5) var(--s4) 76px;
+  position: relative;
+  box-shadow: var(--shadow);
+}
+
+.steps li::before {
+  content: counter(step, decimal-leading-zero);
+  position: absolute;
+  left: var(--s5);
+  top: var(--s4);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--step-1);
+  display: grid;
+  place-items: center;
+}
+
+.steps h3 {
+  font-size: var(--step-3);
+}
+
+.steps p {
+  color: var(--ink-2);
+  margin-top: 2px;
+}
+
+.glance {
+  background: linear-gradient(160deg, var(--band-to), var(--band-from));
+  color: #ffffff;
+  border-radius: 20px;
+  padding: var(--s6) var(--s5);
+}
+
+.glance h3 {
+  display: inline-block;
+  background: #ffffff;
+  color: #0a1a4a;
+  padding: 8px 20px;
+  border-radius: var(--radius-pill);
+  font-size: var(--step-2);
+  margin-bottom: var(--s4);
+}
+
+.glance p {
+  color: #e0eaff;
+  font-size: var(--step-2);
+}
+
+.glance dl {
+  margin: var(--s4) 0 0;
+}
+
+.glance dl div {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--s2) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.glance dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-band {
+  background: var(--rail);
+  color: #ffffff;
+  border-radius: 20px;
+  padding: var(--s6);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s5);
+}
+
+.stat-band dt {
+  color: #b9c7f0;
+  font-size: var(--step-2);
+  order: 2;
+}
+
+.stat-band div {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-band dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+  color: #5c9dff;
+  font-variant-numeric: tabular-nums;
+}
+
+.results {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s4);
+}
+
+.result {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: 18px;
+  padding: var(--s5);
+  box-shadow: var(--shadow);
+}
+
+.result strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--mark);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.result span {
+  display: block;
+  margin-top: var(--s2);
+  color: var(--ink-2);
+}
+
+.fineprint {
+  margin-top: var(--s4);
+  color: var(--ink-3);
+  font-size: var(--step-1);
+  max-width: 80ch;
+}
+
+.cta {
+  background: var(--rail);
+  color: #ffffff;
+  border-radius: 24px;
+  padding: var(--s7) var(--s6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s5);
+  flex-wrap: wrap;
+}
+
+.cta h2 span {
+  color: #5c9dff;
+}
+
+.cta p {
+  color: #c9d5f5;
+  margin-top: var(--s2);
+  max-width: 56ch;
+}
+
+.land-foot {
+  margin-top: 88px;
+  background: var(--rail);
+  color: #b9c7f0;
+  padding: var(--s6) 0;
+  font-size: var(--step-1);
+}
+
+.land-foot .wrap {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s5);
+  flex-wrap: wrap;
+}
+
+.land-foot a {
+  color: #ffffff;
+}
+
+.land-foot p {
+  max-width: 62ch;
+}
+
+@media (max-width: 900px) {
+  .hero {
+    padding: 56px 0 130px;
+    border-radius: 0 0 40% 40% / 0 0 48px 48px;
+  }
+
+  .hero-grid,
+  .how-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s6);
+  }
+
+  .hero-copy {
+    order: -1;
+  }
+
+  .feature-band-inner,
+  .results {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s5);
+  }
+
+  .watch-grid,
+  .stat-band {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .section-head {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s3);
+  }
+
+  .land .land-section {
+    margin-top: 64px;
+  }
+
+  .land .wrap {
+    padding: 0 var(--s4);
+  }
+}
+
+@media (max-width: 520px) {
+  .watch-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .land-top-facts {
+    display: none;
+  }
+}
+
+/* Photographs. Each one is optional and is uploaded under Settings, Images. */
+.land img.fill,
+.hero-photo,
+.how-photo,
+.cta-photo {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+}
+
+.hero-photo {
+  height: auto;
+  aspect-ratio: 4 / 3;
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+.hero-visual.has-photo .monitor {
+  position: relative;
+  margin: -84px var(--s5) 0;
+}
+
+.watch-layout.has-photo {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.6fr);
+  gap: var(--s4);
+}
+
+.watch-layout.has-photo .watch-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.watch-photo {
+  position: relative;
+  min-height: 360px;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.land img.fill {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+
+.how-side {
+  display: grid;
+  gap: var(--s4);
+}
+
+.how-photo {
+  height: auto;
+  aspect-ratio: 4 / 3;
+  border-radius: 20px;
+}
+
+.cta.has-photo {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.cta-photo {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  z-index: -2;
+}
+
+.cta.has-photo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, rgba(7, 20, 66, 0.94) 0%, rgba(7, 20, 66, 0.8) 45%, rgba(7, 20, 66, 0.3) 100%);
+}
+
+@media (max-width: 900px) {
+  .watch-layout.has-photo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .watch-photo {
+    min-height: 0;
+    aspect-ratio: 16 / 10;
+  }
+
+  .hero-visual.has-photo .monitor {
+    margin: -56px var(--s3) 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .watch-layout.has-photo .watch-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Between phone and desktop the hero keeps its two columns, so the photo stays in proportion and the arch stays in view. */
+@media (min-width: 681px) and (max-width: 900px) {
+  .hero {
+    border-radius: 0 0 50% 50% / 0 0 72px 72px;
+  }
+
+  .hero-grid {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: var(--s5);
+  }
+
+  .hero-copy {
+    order: 0;
+  }
+}
+
+/* Stacked on a phone, the photo is held to a sensible size. */
+@media (max-width: 680px) {
+  .hero {
+    border-radius: 0 0 50% 50% / 0 0 56px 56px;
+  }
+
+  .hero-visual.has-photo {
+    width: 100%;
+    max-width: 460px;
+    margin-inline: auto;
+  }
+}
+
+/* The hero fills the first screen: from under the header to the bottom of the window, with the arc on that edge. */
+.hero {
+  min-height: calc(100vh - 99px);
+  min-height: calc(100svh - 99px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero > .wrap {
+  width: 100%;
+}
+
+/* The hero content scales with the screen, so a full screen hero is filled rather than sparse. */
+@media (min-width: 901px) {
+  .hero {
+    padding-top: 40px;
+    padding-bottom: 150px;
+  }
+
+  .hero-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(40px, 5vw, 80px);
+  }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, min(4.6vw, 7.4vh), 4.5rem);
+  }
+
+  .hero-copy p {
+    font-size: clamp(1.02rem, 1.25vw, 1.2rem);
+    max-width: 58ch;
+  }
+
+  .hero-photo {
+    max-height: calc(100svh - 420px);
+    min-height: 280px;
+  }
+
+  .hero-visual.has-photo .monitor {
+    margin: -120px var(--s6) 0;
+  }
+}
+
+/* On wide screens the whole landing page widens a little, so the header, hero and sections stay aligned. */
+@media (min-width: 1360px) {
+  .land {
+    --wrap: 1240px;
+  }
+}

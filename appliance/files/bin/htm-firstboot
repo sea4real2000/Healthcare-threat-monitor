@@ -1,0 +1,28 @@
+#!/bin/sh
+# Healthcare Threat Monitor appliance: prepares a new copy once, on its first start.
+# Grows the system to fill the disk it was given, and loads the platform's software into Docker.
+set -eu
+# Each step goes to the system log, and to the serial console of a computer that has one.
+log() { echo "htm-firstboot: $*"; if [ -c /dev/ttyS0 ]; then echo "htm-firstboot: $*" > /dev/ttyS0 2>/dev/null || true; fi; }
+root=$(findmnt -no SOURCE /)
+# The disk and partition number, from the kernel's own description of the device.
+dev=$(basename "$(readlink -f "$root")")
+part=$(cat "/sys/class/block/$dev/partition")
+disk=/dev/$(basename "$(readlink -f "/sys/class/block/$dev/..")")
+# The disk may be larger than the image: fix the partition table's end marker, then grow the system.
+sgdisk -e "$disk" >/dev/null 2>&1 || true
+if out=$(growpart "$disk" "$part" 2>&1); then
+  log "grew partition $part on $disk"
+else
+  case "$out" in *NOCHANGE*) log "partition $part already fills $disk" ;; *) log "could not grow partition $part on $disk: $out" ;; esac
+fi
+if resize2fs "$root" >/dev/null 2>&1; then log "file system fills the partition: $(df -h --output=size / | tail -1 | tr -d ' ')"; else log "could not grow the file system"; fi
+for f in /opt/htm/images/*.tar.zst; do
+  [ -e "$f" ] || continue
+  log "loading $(basename "$f")"
+  zstd -dc "$f" | docker load
+  rm -f "$f"
+done
+mkdir -p /var/lib/htm
+touch /var/lib/htm/firstboot-done
+log "ready"

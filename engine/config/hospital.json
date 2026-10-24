@@ -1,0 +1,341 @@
+{
+  "hospital_name": "Riverbend General (simulated)",
+  "mail_domain": "riverbend.example",
+  "internal_domain": "rbg.internal",
+  "seed": 20261009,
+  "patients": 600,
+  "remote_staff_share": 0.15,
+  "departments": [
+    {
+      "id": "ED",
+      "name": "Emergency",
+      "zone": "clinical",
+      "subnet": "10.20.1",
+      "workstations": 16,
+      "staff": {
+        "physician": 8,
+        "nurse": 20,
+        "registrar": 4
+      }
+    },
+    {
+      "id": "ICU",
+      "name": "Intensive Care",
+      "zone": "clinical",
+      "subnet": "10.20.2",
+      "workstations": 12,
+      "staff": {
+        "physician": 6,
+        "nurse": 18
+      }
+    },
+    {
+      "id": "SURG",
+      "name": "Surgery",
+      "zone": "clinical",
+      "subnet": "10.20.3",
+      "workstations": 12,
+      "staff": {
+        "physician": 8,
+        "nurse": 14,
+        "technician": 4
+      }
+    },
+    {
+      "id": "CARD",
+      "name": "Cardiology",
+      "zone": "clinical",
+      "subnet": "10.20.4",
+      "workstations": 10,
+      "staff": {
+        "physician": 5,
+        "nurse": 10,
+        "technician": 3
+      }
+    },
+    {
+      "id": "ONC",
+      "name": "Oncology",
+      "zone": "clinical",
+      "subnet": "10.20.5",
+      "workstations": 10,
+      "staff": {
+        "physician": 5,
+        "nurse": 10
+      }
+    },
+    {
+      "id": "RAD",
+      "name": "Radiology",
+      "zone": "clinical",
+      "subnet": "10.20.6",
+      "workstations": 10,
+      "staff": {
+        "physician": 4,
+        "technician": 10
+      }
+    },
+    {
+      "id": "LAB",
+      "name": "Laboratory",
+      "zone": "clinical",
+      "subnet": "10.20.7",
+      "workstations": 8,
+      "staff": {
+        "technician": 12
+      }
+    },
+    {
+      "id": "PHARM",
+      "name": "Pharmacy",
+      "zone": "clinical",
+      "subnet": "10.20.8",
+      "workstations": 8,
+      "staff": {
+        "pharmacist": 8,
+        "technician": 4
+      }
+    },
+    {
+      "id": "OPD",
+      "name": "Outpatient",
+      "zone": "clinical",
+      "subnet": "10.20.9",
+      "workstations": 14,
+      "staff": {
+        "physician": 8,
+        "nurse": 10,
+        "registrar": 6
+      }
+    },
+    {
+      "id": "BILL",
+      "name": "Billing",
+      "zone": "admin",
+      "subnet": "10.30.1",
+      "workstations": 10,
+      "staff": {
+        "billing": 12
+      }
+    },
+    {
+      "id": "IT",
+      "name": "Information Technology",
+      "zone": "admin",
+      "subnet": "10.30.2",
+      "workstations": 8,
+      "staff": {
+        "it_admin": 8
+      }
+    }
+  ],
+  "servers": [
+    {
+      "id": "SRVEHRAPP01",
+      "role": "ehr_application",
+      "os": "Linux",
+      "ip": "10.10.1.10"
+    },
+    {
+      "id": "SRVEHRDB01",
+      "role": "ehr_database",
+      "os": "Linux",
+      "ip": "10.10.1.11"
+    },
+    {
+      "id": "SRVDC01",
+      "role": "domain_controller",
+      "os": "Windows Server",
+      "ip": "10.10.1.20"
+    },
+    {
+      "id": "SRVFILE01",
+      "role": "file_server",
+      "os": "Windows Server",
+      "ip": "10.10.1.21"
+    },
+    {
+      "id": "SRVPHARM01",
+      "role": "pharmacy_application",
+      "os": "Windows Server",
+      "ip": "10.10.1.22"
+    },
+    {
+      "id": "SRVPACS01",
+      "role": "imaging_archive",
+      "os": "Linux",
+      "ip": "10.10.1.30"
+    },
+    {
+      "id": "SRVMQTT01",
+      "role": "device_gateway",
+      "os": "Linux",
+      "ip": "10.10.1.31"
+    },
+    {
+      "id": "SRVMAIL01",
+      "role": "mail_gateway",
+      "os": "Linux",
+      "ip": "10.10.1.40"
+    },
+    {
+      "id": "SRVDNS01",
+      "role": "dns_resolver",
+      "os": "Linux",
+      "ip": "10.10.1.41"
+    },
+    {
+      "id": "SRVBACKUP01",
+      "role": "backup",
+      "os": "Linux",
+      "ip": "10.10.1.50"
+    }
+  ],
+  "network": [
+    {
+      "id": "FWCORE01",
+      "role": "core_firewall",
+      "ip": "10.0.0.1"
+    },
+    {
+      "id": "VPNGW01",
+      "role": "vpn_gateway",
+      "ip": "10.0.0.2"
+    }
+  ],
+  "devices": [
+    {
+      "prefix": "PUMP",
+      "role": "infusion_pump",
+      "count": 16,
+      "subnet": "10.40.1",
+      "departments": [
+        "ICU",
+        "ED",
+        "SURG",
+        "ONC",
+        "CARD"
+      ],
+      "gateway": "SRVMQTT01",
+      "port": 8883,
+      "protocol": "mqtt"
+    },
+    {
+      "prefix": "MON",
+      "role": "patient_monitor",
+      "count": 12,
+      "subnet": "10.40.2",
+      "departments": [
+        "ICU",
+        "ED",
+        "CARD",
+        "SURG"
+      ],
+      "gateway": "SRVMQTT01",
+      "port": 8883,
+      "protocol": "mqtt"
+    },
+    {
+      "prefix": "VENT",
+      "role": "ventilator",
+      "count": 6,
+      "subnet": "10.40.3",
+      "departments": [
+        "ICU",
+        "ED"
+      ],
+      "gateway": "SRVMQTT01",
+      "port": 8883,
+      "protocol": "mqtt"
+    },
+    {
+      "prefix": "IMG",
+      "role": "imaging_modality",
+      "count": 6,
+      "subnet": "10.40.4",
+      "departments": [
+        "RAD",
+        "CARD"
+      ],
+      "gateway": "SRVPACS01",
+      "port": 104,
+      "protocol": "tcp"
+    }
+  ],
+  "rates_per_minute_at_peak": {
+    "chart_access": 14,
+    "logon": 2.5,
+    "endpoint_activity": 10,
+    "web_browsing": 6,
+    "inbound_email": 5,
+    "vpn_session": 0.4,
+    "linux_server": 1.5,
+    "device_telemetry": 20,
+    "cloud_activity": 1.2,
+    "service_change": 0.3,
+    "software_deployment": 0.01,
+    "archive_job": 0.004,
+    "account_lockout": 0.003,
+    "device_firmware_check": 0.004
+  },
+  "hourly_activity_factor": [
+    0.25,
+    0.2,
+    0.2,
+    0.2,
+    0.22,
+    0.3,
+    0.45,
+    0.7,
+    0.95,
+    1.0,
+    1.0,
+    1.0,
+    0.9,
+    0.95,
+    1.0,
+    1.0,
+    0.9,
+    0.75,
+    0.6,
+    0.5,
+    0.45,
+    0.4,
+    0.32,
+    0.28
+  ],
+  "always_on_activities": [
+    "device_telemetry",
+    "linux_server",
+    "service_change",
+    "archive_job",
+    "device_firmware_check"
+  ],
+  "noise": {
+    "failed_logon_share": 0.06,
+    "cross_department_chart_share": 0.08,
+    "chart_update_share": 0.12,
+    "vpn_failed_share": 0.05,
+    "vpn_foreign_country_share": 0.03,
+    "ssh_failed_share": 0.04,
+    "dns_nxdomain_share": 0.02,
+    "firewall_deny_share": 0.015,
+    "email_verdicts": {
+      "clean": 0.9,
+      "spam": 0.07,
+      "phish": 0.025,
+      "malware": 0.005
+    },
+    "float_cross_department_chart_share": 0.6,
+    "rare_domain_share": 0.01,
+    "rare_domain_pool": 3000
+  },
+  "float_nurses": 6,
+  "flagged_patients": {
+    "vip": 4,
+    "staff": 4
+  },
+  "terminated_staff": 2,
+  "scenario_time_scale": 1.0,
+  "night_shift_share": 0.3
+}

@@ -1,0 +1,27 @@
+# HTTPS in front of the console, for a hospital's own installation (docker-compose.hospital.yml).
+# Caddy makes its own certificate authority and certificate for HTM_HOSTNAME. Browsers warn until that
+# authority is trusted on each computer: see docs/hospital_install.md.
+{
+	local_certs
+	skip_install_trust
+	# Browsers send no server name when the address is an IP, as it usually is inside a hospital.
+	# This tells Caddy which certificate to use then.
+	default_sni {$HTM_HOSTNAME:localhost}
+}
+
+{$HTM_HOSTNAME:localhost} {
+	tls internal
+	encode gzip
+	reverse_proxy console:3000
+	header -Server
+}
+
+# The installation's own root certificate, which the console puts in Windows collector installers so each
+# computer trusts this authority and nothing else. A root certificate is public. Only that one file is served,
+# whatever path is asked for, and only to requests that name this server "https", as the console does inside Docker.
+http://https {
+	rewrite * /root.crt
+	root * /data/caddy/pki/authorities/local
+	file_server
+	header -Server
+}

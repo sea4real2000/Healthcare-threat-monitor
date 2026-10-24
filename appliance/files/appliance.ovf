@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Healthcare Threat Monitor appliance. Filled in by appliance/build.sh. -->
+<Envelope ovf:version="1.0" xml:lang="en-US"
+  xmlns="http://schemas.dmtf.org/ovf/envelope/1"
+  xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1"
+  xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData"
+  xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <References>
+    <File ovf:id="file1" ovf:href="@NAME@-disk1.vmdk" ovf:size="@VMDK_SIZE@"/>
+  </References>
+  <DiskSection>
+    <Info>The appliance's disk</Info>
+    <Disk ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:capacity="@CAPACITY@"
+      ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized"/>
+  </DiskSection>
+  <NetworkSection>
+    <Info>The network the appliance joins</Info>
+    <Network ovf:name="Bridged">
+      <Description>The hospital network, so other computers can reach the appliance</Description>
+    </Network>
+  </NetworkSection>
+  <VirtualSystem ovf:id="@NAME@">
+    <Info>Healthcare Threat Monitor @VERSION@</Info>
+    <Name>Healthcare Threat Monitor @VERSION@</Name>
+    <AnnotationSection>
+      <Info>About this appliance</Info>
+      <Annotation>Healthcare Threat Monitor @VERSION@. Start it, then open the address shown on its screen in a web browser on another computer. Open source under the Apache License 2.0.</Annotation>
+    </AnnotationSection>
+    <ProductSection>
+      <Info>Product</Info>
+      <Product>Healthcare Threat Monitor</Product>
+      <Version>@VERSION@</Version>
+    </ProductSection>
+    <OperatingSystemSection ovf:id="94">
+      <Info>The operating system inside</Info>
+      <Description>Ubuntu 64 bit</Description>
+    </OperatingSystemSection>
+    <VirtualHardwareSection>
+      <Info>Virtual hardware</Info>
+      <System>
+        <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
+        <vssd:InstanceID>0</vssd:InstanceID>
+        <vssd:VirtualSystemIdentifier>@NAME@</vssd:VirtualSystemIdentifier>
+        <vssd:VirtualSystemType>vmx-10 virtualbox-2.2</vssd:VirtualSystemType>
+      </System>
+      <Item>
+        <rasd:Caption>@CPUS@ virtual CPUs</rasd:Caption>
+        <rasd:Description>Number of virtual CPUs</rasd:Description>
+        <rasd:ElementName>@CPUS@ virtual CPUs</rasd:ElementName>
+        <rasd:InstanceID>1</rasd:InstanceID>
+        <rasd:ResourceType>3</rasd:ResourceType>
+        <rasd:VirtualQuantity>@CPUS@</rasd:VirtualQuantity>
+      </Item>
+      <Item>
+        <rasd:AllocationUnits>MegaBytes</rasd:AllocationUnits>
+        <rasd:Caption>@MEMORY@ MB of memory</rasd:Caption>
+        <rasd:Description>Memory Size</rasd:Description>
+        <rasd:ElementName>@MEMORY@ MB of memory</rasd:ElementName>
+        <rasd:InstanceID>2</rasd:InstanceID>
+        <rasd:ResourceType>4</rasd:ResourceType>
+        <rasd:VirtualQuantity>@MEMORY@</rasd:VirtualQuantity>
+      </Item>
+      <Item>
+        <rasd:Address>0</rasd:Address>
+        <rasd:Caption>sataController0</rasd:Caption>
+        <rasd:Description>SATA Controller</rasd:Description>
+        <rasd:ElementName>sataController0</rasd:ElementName>
+        <rasd:InstanceID>3</rasd:InstanceID>
+        <rasd:ResourceSubType>AHCI</rasd:ResourceSubType>
+        <rasd:ResourceType>20</rasd:ResourceType>
+      </Item>
+      <Item>
+        <rasd:AddressOnParent>0</rasd:AddressOnParent>
+        <rasd:Caption>disk1</rasd:Caption>
+        <rasd:Description>Disk Image</rasd:Description>
+        <rasd:ElementName>disk1</rasd:ElementName>
+        <rasd:HostResource>/disk/vmdisk1</rasd:HostResource>
+        <rasd:InstanceID>4</rasd:InstanceID>
+        <rasd:Parent>3</rasd:Parent>
+        <rasd:ResourceType>17</rasd:ResourceType>
+      </Item>
+      <Item>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Caption>Ethernet adapter on 'Bridged'</rasd:Caption>
+        <rasd:Connection>Bridged</rasd:Connection>
+        <rasd:ElementName>Ethernet adapter on 'Bridged'</rasd:ElementName>
+        <rasd:InstanceID>5</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </Item>
+    </VirtualHardwareSection>
+  </VirtualSystem>
+</Envelope>

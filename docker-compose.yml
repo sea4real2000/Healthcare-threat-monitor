@@ -1,0 +1,93 @@
+# The whole platform on one computer, with one command:  docker compose up
+# Then open http://localhost:3000 and press "Try the demo" on the sign in page.
+#
+# Everything runs here: the database, the console and the background service that simulates a
+# hospital and detects attacks on it. Secrets are generated on first start and kept in the private
+# "secrets" volume. Nothing is published to your network: the console listens on this computer only.
+# To start again from nothing:  docker compose down --volumes
+
+name: healthcare-threat-monitor
+
+x-tools: &tools
+  build:
+    context: .
+    dockerfile: docker/console.Dockerfile
+    target: tools
+  image: healthcare-threat-monitor/tools:local
+
+services:
+  secrets:
+    <<: *tools
+    command: ["node", "scripts/demo_setup.mjs", "secrets"]
+    volumes:
+      - secrets:/secrets
+    restart: "no"
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: htm
+      POSTGRES_DB: htm
+      POSTGRES_PASSWORD_FILE: /run/htm/db_password
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+      - secrets:/run/htm:ro
+    depends_on:
+      secrets:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U htm -d htm"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+
+  setup:
+    <<: *tools
+    command: ["node", "scripts/demo_setup.mjs", "database"]
+    environment:
+      HTM_PUBLIC_URL: http://localhost:3000
+    volumes:
+      - secrets:/secrets:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  console:
+    build:
+      context: .
+      dockerfile: docker/console.Dockerfile
+      target: runtime
+    image: healthcare-threat-monitor/console:local
+    environment:
+      HTM_ENV_FILE: /run/htm/console.env
+      # Lets the sign in cookie work over plain http on this computer. Remove this line if you
+      # put the console behind HTTPS, and never publish this port to a network without HTTPS.
+      ALLOW_INSECURE_COOKIES: "1"
+    volumes:
+      - secrets:/run/htm:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./engine
+    image: healthcare-threat-monitor/worker:local
+    environment:
+      HTM_ENV_FILE: /run/htm/worker.env
+      HTM_API_URL: http://console:3000
+    volumes:
+      - secrets:/run/htm:ro
+    depends_on:
+      console:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  secrets:
+  dbdata:

@@ -1,0 +1,16 @@
+# The background service on its own, for a public demo whose database is on Supabase and whose
+# console is on Vercel. Run it on any computer that stays on, with Docker installed:
+#   cp engine/worker.env.example engine/worker.env     then fill in the four values
+#   docker compose -f docker-compose.worker.yml up -d --build
+# It makes outgoing connections only and opens no port. See docs/public_demo.md.
+
+name: healthcare-threat-monitor-worker
+
+services:
+  worker:
+    build:
+      context: ./engine
+    image: healthcare-threat-monitor/worker:local
+    env_file:
+      - engine/worker.env
+    restart: unless-stopped

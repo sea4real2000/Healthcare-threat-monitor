@@ -1,0 +1,78 @@
+#!/bin/bash
+# Healthcare Threat Monitor appliance: what the computer's own screen shows. Refreshes every few seconds.
+cd /opt/htm || exit 1
+version=$(cat /opt/htm/VERSION 2>/dev/null || echo "")
+code=""
+last=""
+while true; do
+  # The address the network gave this computer now, which is also what the platform is started with.
+  ip=$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p')
+  previous=$(cat /var/lib/htm/previous-address 2>/dev/null || true)
+  state="Starting. This can take a few minutes the first time."
+  [ -f /var/lib/htm/firstboot-done ] || state="Preparing for first use. This takes a few minutes, once."
+  pending=no
+  # Asked by this computer's address, as staff will: the HTTPS server answers only to that name.
+  if [ -n "$ip" ] && curl -sfk --max-time 4 --resolve "$ip:443:127.0.0.1" -o /dev/null "https://$ip/api/health"; then
+    state="Running."
+    # The same question the console asks: is there a setup code, and still no active administrator?
+    answer=$(docker compose exec -T db psql -U htm -d htm -Atc "select exists (select 1 from engine_state where key = 'first_run')
+      and not exists (select 1 from users where role = 'admin' and status = 'active')" 2>/dev/null)
+    if [ "$answer" = "t" ]; then pending=yes; fi
+  fi
+  if [ "$pending" = yes ] && [ -z "$code" ]; then
+    code=$(docker compose run --rm --no-deps -T secrets cat /secrets/setup_code 2>/dev/null | tr -d '\r\n')
+    # The maintenance account starts with the setup code as its password, and must change it at first sign in.
+    if [ -n "$code" ] && [ ! -f /var/lib/htm/maintenance-set ]; then
+      echo "htm:$(echo "$code" | tr -d ' ')" | chpasswd && chage -d 0 htm && touch /var/lib/htm/maintenance-set
+    fi
+  fi
+  screen=$({
+  echo
+  echo "  Healthcare Threat Monitor $version"
+  echo "  ================================================================"
+  echo
+  echo "  $state"
+  echo
+  if [ -n "$ip" ]; then
+    echo "  On another computer on this network, open this address in a web browser:"
+    echo
+    echo "        https://$ip"
+    echo
+    echo "  The browser warns about the certificate the first time. Choose Advanced, then Continue."
+  else
+    echo "  Waiting for a network address. Check the network cable or the virtual machine's network setting."
+  fi
+  case "$ip" in 10.0.2.*)
+    echo
+    echo "  This looks like VirtualBox's private network, which other computers cannot reach."
+    echo "  Shut down, then in VirtualBox choose Settings, Network, Attached to: Bridged Adapter."
+    ;;
+  esac
+  if [ -n "$previous" ]; then
+    echo
+    echo "  The address changed from $previous. Windows computers set up before must be set up again."
+    echo "  Ask whoever runs the network to give this computer a fixed address."
+  fi
+  if [ "$pending" = yes ] && [ -n "$code" ]; then
+    echo
+    echo "  Setup code:  $code"
+    echo
+    echo "  The browser asks for this code once, to set up the first administrator."
+  fi
+  echo
+  echo "  ----------------------------------------------------------------"
+  if [ "$pending" = yes ]; then
+    echo "  Maintenance: press Alt and F2. User htm, password the setup code."
+  else
+    echo "  Maintenance: press Alt and F2 and sign in as htm."
+  fi
+  })
+  clear
+  echo "$screen"
+  # A server without a screen may have a serial console instead. It gets the same text, when it changes.
+  if [ "$screen" != "$last" ] && [ -c /dev/ttyS0 ]; then
+    { echo; echo "$screen"; } > /dev/ttyS0 2>/dev/null || true
+  fi
+  last=$screen
+  sleep 5
+done

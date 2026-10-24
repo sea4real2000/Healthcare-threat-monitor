@@ -1,0 +1,30 @@
+[
+  {
+    "slot": "hero",
+    "file": "hero.webp",
+    "alt": "A nurse in blue scrubs working at a computer on a hospital ward",
+    "width": 1448,
+    "height": 1086
+  },
+  {
+    "slot": "watches",
+    "file": "watches.webp",
+    "alt": "A patient monitor showing heart rate, oxygen level and blood pressure beside a hospital bed",
+    "width": 1122,
+    "height": 1402
+  },
+  {
+    "slot": "how",
+    "file": "how.webp",
+    "alt": "A security analyst studying a world map and activity logs on two screens",
+    "width": 1600,
+    "height": 1200
+  },
+  {
+    "slot": "close",
+    "file": "close.webp",
+    "alt": "The entrance of a modern hospital building at dusk",
+    "width": 1916,
+    "height": 821
+  }
+]

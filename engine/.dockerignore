@@ -1,0 +1,6 @@
+runs
+tests
+**/__pycache__
+**/.env
+**/.env.*
+worker.env

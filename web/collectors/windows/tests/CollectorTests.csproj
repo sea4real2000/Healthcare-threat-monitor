@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Tests the Windows collector core on any computer with the .NET SDK. Run: dotnet run, then the word unit.
+       The collector is compiled at C# 5, the level Windows PowerShell's Add-Type uses. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>5</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <NoWarn>SYSLIB0014;SYSLIB0057;CS8981</NoWarn>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../HtmCollector.cs" />
+    <Compile Include="Tests.cs" />
+  </ItemGroup>
+</Project>

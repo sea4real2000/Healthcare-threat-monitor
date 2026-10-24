@@ -1,0 +1,17 @@
+[Unit]
+Description=Healthcare Threat Monitor
+After=docker.service network-online.target htm-firstboot.service
+Wants=network-online.target
+Requires=docker.service
+ConditionPathExists=!/etc/htm/installer
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/htm/bin/htm-start
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=1800
+
+[Install]
+WantedBy=multi-user.target

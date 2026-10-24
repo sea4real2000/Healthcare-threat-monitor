@@ -1,0 +1,18 @@
+[Unit]
+Description=Healthcare Threat Monitor USB installer
+After=systemd-user-sessions.service
+Conflicts=getty@tty1.service
+ConditionPathExists=/etc/htm/installer
+
+[Service]
+ExecStart=/opt/htm/bin/htm-installer
+StandardInput=tty
+StandardOutput=tty
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

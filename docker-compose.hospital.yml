@@ -1,0 +1,136 @@
+# A hospital's own installation, on one computer inside the hospital network:
+#   HTM_HOSTNAME=10.0.0.5 docker compose -f docker-compose.hospital.yml up -d
+# Use the address or name staff will type to reach this computer. Then run
+#   docker compose -f docker-compose.hospital.yml logs setup
+# and open the one time link it prints to create the administrator account.
+#
+# Unlike the demo, there is no simulated hospital, no simulated endpoint product and no public demo login.
+# The console is served over HTTPS to the hospital network on ports 80 and 443, and router, firewall and server
+# logs are received on port 514. The database is not
+# reachable from outside. Secrets are generated on first start and kept in the private "secrets" volume.
+# See docs/hospital_install.md.
+
+name: healthcare-threat-monitor-hospital
+
+x-tools: &tools
+  build:
+    context: .
+    dockerfile: docker/console.Dockerfile
+    target: tools
+  image: healthcare-threat-monitor/tools:local
+
+services:
+  secrets:
+    <<: *tools
+    command: ["node", "scripts/demo_setup.mjs", "secrets"]
+    environment:
+      HTM_MODE: hospital
+    volumes:
+      - secrets:/secrets
+    restart: "no"
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: htm
+      POSTGRES_DB: htm
+      POSTGRES_PASSWORD_FILE: /run/htm/db_password
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+      - secrets:/run/htm:ro
+    depends_on:
+      secrets:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U htm -d htm"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+
+  setup:
+    <<: *tools
+    command: ["node", "scripts/demo_setup.mjs", "database"]
+    environment:
+      HTM_MODE: hospital
+      HTM_PUBLIC_URL: https://${HTM_HOSTNAME:-localhost}
+      HTM_ADMIN_EMAIL: ${HTM_ADMIN_EMAIL:-admin@hospital.local}
+    volumes:
+      - secrets:/secrets:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  console:
+    build:
+      context: .
+      dockerfile: docker/console.Dockerfile
+      target: runtime
+    image: healthcare-threat-monitor/console:local
+    environment:
+      HTM_ENV_FILE: /run/htm/console.env
+      # Where the console reads the installation's root certificate for Windows collector installers.
+      HTM_TRUST_URL: http://https/root.crt
+    volumes:
+      - secrets:/run/htm:ro
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  https:
+    image: caddy:2
+    environment:
+      HTM_HOSTNAME: ${HTM_HOSTNAME:-localhost}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      console:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./engine
+    image: healthcare-threat-monitor/worker:local
+    environment:
+      HTM_ENV_FILE: /run/htm/worker.env
+      HTM_API_URL: http://console:3000
+    volumes:
+      - secrets:/run/htm:ro
+    depends_on:
+      console:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Receives syslog from routers, firewalls and servers on port 514, UDP and TCP. Logs are only kept from
+  # devices an administrator accepts under Sources. Set HTM_SYSLOG_PORT to use another port on this computer.
+  receiver:
+    build:
+      context: ./engine
+    image: healthcare-threat-monitor/worker:local
+    command: ["python", "-m", "receiver"]
+    environment:
+      HTM_ENV_FILE: /run/htm/worker.env
+      HTM_API_URL: http://console:3000
+    volumes:
+      - secrets:/run/htm:ro
+    ports:
+      - "${HTM_SYSLOG_PORT:-514}:5514/udp"
+      - "${HTM_SYSLOG_PORT:-514}:5514/tcp"
+    depends_on:
+      console:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  secrets:
+  dbdata:
+  caddy_data:
+  caddy_config:
