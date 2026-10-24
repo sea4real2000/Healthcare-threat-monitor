@@ -1,14 +1,14 @@
 # The console, built from the repository root:  docker build -f docker/console.Dockerfile .
 # Stages: deps installs packages, tools runs the setup scripts, build compiles, runtime serves.
 
-FROM node:22-bookworm-slim AS deps
+FROM node:25-bookworm-slim AS deps
 WORKDIR /app/web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 
 # Migrations, photo loading and first time setup. Used by the setup steps of every installation.
 # The scripts need only the database client, at the exact version package.json pins, so the image stays small.
-FROM node:22-bookworm-slim AS tools
+FROM node:25-bookworm-slim AS tools
 WORKDIR /app/web
 COPY web/package.json ./package.full.json
 RUN node -e "const p = require('./package.full.json'); require('fs').writeFileSync('package.json', JSON.stringify({ name: 'htm-tools', private: true, dependencies: { postgres: p.dependencies.postgres } }))" \
@@ -25,7 +25,7 @@ COPY web/ ./
 ENV NEXT_OUTPUT=standalone NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-FROM node:22-bookworm-slim AS runtime
+FROM node:25-bookworm-slim AS runtime
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000
 WORKDIR /app
 # The application files belong to root, so the running console cannot change its own code.
