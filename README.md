@@ -1,5 +1,7 @@
 # Healthcare Threat Monitor
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15859/badge)](https://www.bestpractices.dev/projects/15859)
+
 *Working title. The name is one row in the settings table, so renaming the platform is a data change.*
 
 An open source platform that watches the security logs of a hospital, detects threats such as ransomware and improper access to patient records, and keeps a human analyst in charge of every response.
