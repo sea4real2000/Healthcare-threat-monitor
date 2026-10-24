@@ -1,14 +1,21 @@
-#!/bin/sh
+#!/bin/bash
 # Healthcare Threat Monitor appliance: prepares a new copy once, on its first start.
 # Grows the system to fill the disk it was given, and loads the platform's software into Docker.
-set -eu
-# Each step goes to the system log, and to the serial console of a computer that has one.
+# Safe to stop at any point, for example by switching the computer off: it carries on from where it was
+# on the next start, and a part that failed to load is tried again.
+set -uo pipefail
+mkdir -p /var/lib/htm
+# Each step goes to the system log, to the computer's own screen through /run/htm-status, and to the serial
+# console of a computer that has one.
 log() { echo "htm-firstboot: $*"; if [ -c /dev/ttyS0 ]; then echo "htm-firstboot: $*" > /dev/ttyS0 2>/dev/null || true; fi; }
+status() { echo "$*" > /run/htm-status; log "$*"; }
+
 root=$(findmnt -no SOURCE /)
 # The disk and partition number, from the kernel's own description of the device.
 dev=$(basename "$(readlink -f "$root")")
 part=$(cat "/sys/class/block/$dev/partition")
 disk=/dev/$(basename "$(readlink -f "/sys/class/block/$dev/..")")
+status "Making room on the disk."
 # The disk may be larger than the image: fix the partition table's end marker, then grow the system.
 sgdisk -e "$disk" >/dev/null 2>&1 || true
 if out=$(growpart "$disk" "$part" 2>&1); then
@@ -17,12 +24,41 @@ else
   case "$out" in *NOCHANGE*) log "partition $part already fills $disk" ;; *) log "could not grow partition $part on $disk: $out" ;; esac
 fi
 if resize2fs "$root" >/dev/null 2>&1; then log "file system fills the partition: $(df -h --output=size / | tail -1 | tr -d ' ')"; else log "could not grow the file system"; fi
-for f in /opt/htm/images/*.tar.zst; do
-  [ -e "$f" ] || continue
-  log "loading $(basename "$f")"
-  zstd -dc "$f" | docker load
+
+# Each image file is removed only once Docker has it, so a stopped start picks up the ones still to load.
+mapfile -t files < <(ls /opt/htm/images/*.tar.zst 2>/dev/null)
+total=$(wc -l < /opt/htm/images.list)
+done_before=$(( total - ${#files[@]} ))
+i=$done_before
+for f in "${files[@]}"; do
+  i=$((i + 1))
+  name=$(basename "$f")
+  loaded=no
+  for attempt in 1 2 3; do
+    status "Loading the platform's software, part $i of $total. Each part can take several minutes."
+    log "loading $name, attempt $attempt"
+    if zstd -dc "$f" | docker load >/dev/null; then loaded=yes; break; fi
+    log "loading $name failed, trying again"
+    sleep 10
+  done
+  if [ "$loaded" != yes ]; then
+    status "Could not load part $i of $total. Restart this computer to try again."
+    exit 1
+  fi
   rm -f "$f"
 done
-mkdir -p /var/lib/htm
+
+# Every image the platform needs must now be in Docker, however the loading went.
+missing=""
+while read -r image; do
+  [ -n "$image" ] || continue
+  docker image inspect "$image" >/dev/null 2>&1 || missing="$missing $image"
+done < /opt/htm/images.list
+if [ -n "$missing" ]; then
+  log "missing after loading:$missing"
+  status "Some of the platform's software is missing. Restart this computer to try again."
+  exit 1
+fi
 touch /var/lib/htm/firstboot-done
+status "Prepared."
 log "ready"

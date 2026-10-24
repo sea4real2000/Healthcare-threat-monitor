@@ -2,39 +2,85 @@
 # Healthcare Threat Monitor appliance: what the computer's own screen shows. Refreshes every few seconds.
 cd /opt/htm || exit 1
 version=$(cat /opt/htm/VERSION 2>/dev/null || echo "")
+virt=$(systemd-detect-virt 2>/dev/null || echo none)
+if [ "$virt" = "oracle" ]; then keys="Right Ctrl and F2, as VirtualBox catches Alt and F2"; else keys="Alt and F2"; fi
+memory_mb=$(( $(awk '/MemTotal/ {print $2}' /proc/meminfo) / 1024 ))
 code=""
 last=""
+
+# The maintenance account gets its own first password, shown here until someone signs in and changes it.
+# That works from the very first start, before the platform is running.
+mkdir -p /var/lib/htm
+if [ ! -f /var/lib/htm/maintenance-code ]; then
+  letters=ABCDEFGHJKMNPQRSTUVWXYZ23456789
+  m=""
+  for _ in $(seq 1 10); do m="$m${letters:$(( $(od -An -N2 -tu2 /dev/urandom) % ${#letters} )):1}"; done
+  if echo "htm:$m" | chpasswd && chage -d 0 htm; then
+    ( umask 077; echo "${m:0:5} ${m:5}" > /var/lib/htm/maintenance-code )
+  fi
+fi
+
 while true; do
   # The address the network gave this computer now, which is also what the platform is started with.
   ip=$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p')
   previous=$(cat /var/lib/htm/previous-address 2>/dev/null || true)
-  state="Starting. This can take a few minutes the first time."
-  [ -f /var/lib/htm/firstboot-done ] || state="Preparing for first use. This takes a few minutes, once."
+  detail=$(cat /run/htm-status 2>/dev/null || true)
+  minutes=$(( $(cut -d. -f1 /proc/uptime) / 60 ))
+  if [ -f /var/lib/htm/firstboot-done ]; then
+    state="Starting. This can take a few minutes."
+  else
+    state="Preparing for first use. This happens once."
+  fi
+  running=no
   pending=no
   # Asked by this computer's address, as staff will: the HTTPS server answers only to that name.
   if [ -n "$ip" ] && curl -sfk --max-time 10 --resolve "$ip:443:127.0.0.1" -o /dev/null "https://$ip/api/health"; then
+    running=yes
     state="Running."
     # The same question the console asks: is there a setup code, and still no active administrator?
-    answer=$(docker compose exec -T db psql -U htm -d htm -Atc "select exists (select 1 from engine_state where key = 'first_run')
+    answer=$(timeout 20 docker compose exec -T db psql -U htm -d htm -Atc "select exists (select 1 from engine_state where key = 'first_run')
       and not exists (select 1 from users where role = 'admin' and status = 'active')" 2>/dev/null)
     if [ "$answer" = "t" ]; then pending=yes; fi
   fi
   if [ "$pending" = yes ] && [ -z "$code" ]; then
-    code=$(docker compose run --rm --no-deps -T secrets cat /secrets/setup_code 2>/dev/null | tr -d '\r\n')
-    # The maintenance account starts with the setup code as its password, and must change it at first sign in.
-    if [ -n "$code" ] && [ ! -f /var/lib/htm/maintenance-set ]; then
-      echo "htm:$(echo "$code" | tr -d ' ')" | chpasswd && chage -d 0 htm && touch /var/lib/htm/maintenance-set
-    fi
+    code=$(timeout 60 docker compose run --rm --no-deps -T secrets cat /secrets/setup_code 2>/dev/null | tr -d '\r\n')
   fi
+  maintenance=""
+  if chage -l htm 2>/dev/null | grep -q "password must be changed"; then
+    maintenance=$(cat /var/lib/htm/maintenance-code 2>/dev/null)
+  fi
+
   screen=$({
   echo
   echo "  Healthcare Threat Monitor $version"
   echo "  ================================================================"
   echo
   echo "  $state"
+  if [ "$running" != yes ] && [ -n "$detail" ]; then
+    echo "  $detail  (started $minutes min ago)"
+  fi
+  if [ "$running" != yes ] && [ "$minutes" -ge 25 ]; then
+    echo
+    echo "  This is taking longer than it should. The computer may be too slow for it right now:"
+    if [ "$virt" = "oracle" ]; then
+      echo "  if VirtualBox shows a green turtle at the bottom right of its window, it is running in slow mode."
+      echo "  Switch off Hyper-V and Memory integrity in Windows, restart, and start this again."
+    else
+      echo "  check that hardware virtualisation is switched on, and that nothing else is using the computer."
+    fi
+    echo "  It carries on from where it was. See Troubleshooting in the install guide."
+  fi
+  if [ "$memory_mb" -lt 3500 ]; then
+    echo
+    echo "  This computer has only $memory_mb MB of memory. The platform needs 4096 MB."
+  fi
   echo
   if [ -n "$ip" ]; then
-    echo "  On another computer on this network, open this address in a web browser:"
+    if [ "$running" = yes ]; then
+      echo "  On another computer on this network, open this address in a web browser:"
+    else
+      echo "  When this says Running, open this address in a web browser on another computer:"
+    fi
     echo
     echo "        https://$ip"
     echo
@@ -61,10 +107,11 @@ while true; do
   fi
   echo
   echo "  ----------------------------------------------------------------"
-  if [ "$pending" = yes ]; then
-    echo "  Maintenance: press Alt and F2. User htm, password the setup code."
+  echo "  You do not need to type anything here."
+  if [ -n "$maintenance" ]; then
+    echo "  Maintenance only: press $keys. User htm, first password $maintenance"
   else
-    echo "  Maintenance: press Alt and F2 and sign in as htm."
+    echo "  Maintenance only: press $keys and sign in as htm."
   fi
   })
   clear

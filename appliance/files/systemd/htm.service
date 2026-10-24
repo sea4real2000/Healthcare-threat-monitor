@@ -8,10 +8,11 @@ ConditionPathExists=!/etc/htm/installer
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+# Waits for the first start to finish, however long that takes on a slow computer.
 ExecStart=/opt/htm/bin/htm-start
 Restart=on-failure
 RestartSec=10
-TimeoutStartSec=1800
+TimeoutStartSec=infinity
 
 [Install]
 WantedBy=multi-user.target

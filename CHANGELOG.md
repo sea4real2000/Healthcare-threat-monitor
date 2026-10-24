@@ -2,6 +2,22 @@
 
 Each version's notes say what changed, what an existing installation needs to do, and which publicly known vulnerabilities were fixed. Versions follow [Semantic Versioning](https://semver.org).
 
+## 0.8.1
+
+The appliance's first start, found stuck on a real laptop running VirtualBox in slow mode, now recovers and explains itself.
+
+**Fixed**
+
+- The first start can be switched off at any point and carries on from where it was on the next start. A part that fails to load is tried again, and nothing is cut short on a slow computer. Before, a first start stopped part way could leave the platform unable to start.
+- The screen shows which part of the first start it is on and for how long, and after 25 minutes explains that the computer is running it slowly, with what to change in VirtualBox and Windows.
+- Start up messages no longer print over the screen.
+- The maintenance account has its own first password, shown on the screen from the very first start, so it can be used even before the platform runs. It was the setup code, which only appears once the platform runs.
+- The screen says that nothing needs to be typed, and gives the VirtualBox key for maintenance (Right Ctrl and F2).
+
+**Upgrading**
+
+- Nothing to do for a running installation. A new appliance from this release replaces an earlier one that never finished its first start.
+
 ## 0.8.0
 
 Installing in a hospital no longer needs typed commands.

@@ -2,6 +2,7 @@
 
     python3 appliance/boot_test.py vm  <disk.raw>   [bios|uefi]
     python3 appliance/boot_test.py usb <usb.raw>    [bios|uefi]
+    INTERRUPT=1 python3 appliance/boot_test.py vm <disk.raw> [bios|uefi]   switched off part way through its first start
 
 vm:  starts the virtual machine disk, waits for the address and setup code on its screen, then in a real
      browser enters the code, chooses a password, sets up the sign in app and reaches the console.
@@ -215,6 +216,8 @@ def appliance_check(disk, label):
     try:
         m = wait_serial(log, r'https://(\d+\.\d+\.\d+\.\d+)', BOOT_TIMEOUT, proc)
         ok(f'{label}: the screen shows the address to open', bool(m) and m.group(1) == GUEST_IP, m.group(1) if m else 'nothing')
+        maint = wait_serial(log, r'User htm, first password ([A-Z0-9]{5} [A-Z0-9]{5})', 600, proc)
+        ok(f'{label}: the screen shows a maintenance password from the start, before the platform runs', bool(maint))
         m = wait_serial(log, r'Setup code:\s+([A-Z0-9]{5} [A-Z0-9]{5})', BOOT_TIMEOUT, proc)
         ok(f'{label}: the screen shows the setup code', bool(m))
         if not m:
@@ -232,7 +235,7 @@ def appliance_check(disk, label):
         # The screen changes within a few seconds: still running, and the code and its password hint gone.
         after = None
         for _ in range(60):
-            after = re.search(r'Running\.(?:(?!Setup code|password the setup code)[\s\S])*?Maintenance: press Alt and F2 and sign in as htm\.',
+            after = re.search(r'Running\.(?:(?!Setup code)[\s\S])*?You do not need to type anything here\.',
                               open(log, errors='replace').read()[seen:])
             if after:
                 break
@@ -251,6 +254,14 @@ try:
             disk = f'{work}/vm.raw'
             subprocess.run(['cp', '--sparse=always', DISK, disk], check=True)
             os.truncate(disk, 24 * 1024 ** 3)   # a bigger disk than the image, as the OVA and VHDX give
+        if os.environ.get('INTERRUPT'):
+            # Switched off in the middle of its first start, as a person might do when it seems stuck.
+            log = f'{work}/interrupted.serial'
+            proc = qemu([disk], log)
+            m = wait_serial(log, r'loading \S+, attempt 1[\s\S]*loading \S+, attempt 1', BOOT_TIMEOUT, proc)
+            ok('the first start got part way through loading before being switched off', bool(m))
+            proc.kill(); proc.wait()
+            print('switched off part way through the first start', flush=True)
         appliance_check(disk, 'virtual machine')
     else:
         stick, target = f'{work}/usb.raw', f'{work}/target.raw'

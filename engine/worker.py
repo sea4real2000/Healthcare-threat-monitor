@@ -35,7 +35,7 @@ from simulator.generators import Generators
 from simulator.hospital import build_hospital, load_config
 from simulator.runner import minute_records
 
-VERSION = "0.8.0"
+VERSION = "0.8.1"
 
 
 def log(msg: str) -> None:

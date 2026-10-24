@@ -90,7 +90,10 @@ install -m 755 "$REPO"/appliance/files/bin/* "$ROOT/opt/htm/bin/"
 install -m 644 "$REPO/docker-compose.hospital.yml" "$ROOT/opt/htm/"
 install -m 644 "$REPO/docker/Caddyfile" "$ROOT/opt/htm/docker/"
 echo "$VERSION" > "$ROOT/opt/htm/VERSION"
+# The list of images the first start must find in Docker before it starts the platform.
+: > "$ROOT/opt/htm/images.list"
 for image in $IMAGES; do
+  echo "$image" >> "$ROOT/opt/htm/images.list"
   file=$(echo "$image" | tr '/:' '__').tar.zst
   echo "saving $image"
   docker image inspect "$image" >/dev/null
@@ -137,7 +140,7 @@ insmod part_gpt
 insmod ext2
 search --no-floppy --fs-uuid --set=root $ROOT_UUID
 menuentry "Healthcare Threat Monitor $VERSION" {
-  linux /boot/vmlinuz-$KVER root=UUID=$ROOT_UUID ro console=ttyS0,115200 console=tty1 net.ifnames=1
+  linux /boot/vmlinuz-$KVER root=UUID=$ROOT_UUID ro console=ttyS0,115200 console=tty1 net.ifnames=1 systemd.show_status=error
   initrd /boot/initrd.img-$KVER
 }
 EOF

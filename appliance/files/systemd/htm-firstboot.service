@@ -9,7 +9,10 @@ ConditionPathExists=!/etc/htm/installer
 Type=oneshot
 ExecStart=/opt/htm/bin/htm-firstboot
 RemainAfterExit=yes
-TimeoutStartSec=3600
+# A slow computer can take a long time over the first start. It is never cut short, and tried again on failure.
+TimeoutStartSec=infinity
+Restart=on-failure
+RestartSec=30
 
 [Install]
 WantedBy=multi-user.target

@@ -104,7 +104,7 @@ Each group of Windows computers shares one secret, kept in `C:\ProgramData\Healt
 | --- | --- |
 | Reach a new installation before the hospital does and become its administrator | Until the first administrator is set up, every page leads to one setup page, which needs the ten character setup code shown only on the installation's own screen. Wrong codes are rate limited per address. The database holds only a hash of the code; the code itself is kept in the private secrets storage, for the screen. The page closes for good once an administrator exists. Claiming it is recorded in the audit log. |
 | Guess the setup code | 31 possible characters in 10 places, about 8 x 10^14 codes, with tries limited per minute. |
-| Sign in to the appliance itself | There is no remote sign in: no SSH or other remote shell is installed. The maintenance account `htm` signs in only at the installation's own keyboard or serial console, its first password is the setup code, and it must be changed at first sign in. The `root` account is locked. |
+| Sign in to the appliance itself | There is no remote sign in: no SSH or other remote shell is installed. The maintenance account `htm` signs in only at the installation's own keyboard or serial console, its first password is random, shown on the installation's screen, and must be changed at first sign in. The `root` account is locked. |
 | Start the computer from the USB installer to wipe or copy it | The installer erases nothing until a disk number and the word ERASE are typed at the computer's own keyboard. Physical access to the computer is outside this model. |
 
 ## Known gaps
@@ -128,7 +128,7 @@ Each group of Windows computers shares one secret, kept in `C:\ProgramData\Healt
 - The installation's root certificate is served to the internal Docker network over plain HTTP, for the console to put in installers. A root certificate is public, and only that one file is served. Its fingerprint is shown on the Windows computers page and in each installer so it can be compared.
 - Anyone who can see a new installation's screen, in person or through the virtual machine software's console, can read the setup code until the administrator is set up. Set up the administrator straight after installing.
 - The appliance's disk is not encrypted. Someone who takes the disk, or a copy of the virtual machine, can read the database and the secrets. Use the encryption your virtual machine software or the computer offers, and keep the computer in a locked room.
-- The maintenance account's first password is the setup code, which was on the screen. It must be changed at first sign in, but until then anyone who saw the code can sign in at the keyboard.
+- The maintenance account's first password is shown on the installation's screen until it is changed. Anyone who can see the screen until then can sign in at the keyboard or serial console. Sign in and change it soon after installing.
 - Appliance updates are not automatic. Operating system security updates reach an appliance only when a new version is installed.
 - There is no automatic rotation of secrets.
 - The platform has had no independent security review.

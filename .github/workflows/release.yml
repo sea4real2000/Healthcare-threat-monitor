@@ -50,11 +50,11 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Start the virtual machine and set it up in a browser, with BIOS
+      - name: Start the virtual machine, switch it off part way through its first start, start it again and set it up in a browser, with BIOS
         run: |
           pip install playwright==1.56.0
           python -m playwright install --with-deps chromium
-          python appliance/boot_test.py vm dist/*[0-9].raw bios
+          INTERRUPT=1 python appliance/boot_test.py vm dist/*[0-9].raw bios
 
       - name: Install from the USB stick onto an empty disk, with UEFI and Secure Boot, then set it up
         run: python appliance/boot_test.py usb dist/*-usb.raw uefi

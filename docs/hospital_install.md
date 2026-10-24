@@ -71,7 +71,21 @@ If you have your own certificate or a hospital domain name, the HTTPS settings a
 
 The screen shows the address and whether the platform is running, and refreshes by itself. You do not need to sign in to it for day to day use.
 
-For maintenance, such as backups, press **Alt** and **F2** on the installation's keyboard (in a virtual machine, send the key combination from its menu) and sign in as `htm`. The first password is the setup code, without the space, and it must be changed at first sign in. Keep the new password with your other administrator passwords.
+Nothing needs to be typed on it. For maintenance only, such as backups, press **Alt** and **F2** on the installation's keyboard (in VirtualBox, **Right Ctrl** and **F2**, because VirtualBox catches Alt and F2) and sign in as `htm`. The first password is shown at the bottom of the screen from the very first start; type it without the space. It must be changed at first sign in, and the screen stops showing it once it has been. Keep the new password with your other administrator passwords.
+
+### If the first start seems stuck
+
+The first start loads the platform's software in five parts, and the screen says which part it is on and how long it has been going. On a normal computer it takes 5 to 15 minutes. It is safe to switch the installation off at any point: on the next start it carries on from where it was, and a part that failed to load is tried again.
+
+If it takes much longer, the computer is running it slowly. The screen says so after 25 minutes.
+
+- **VirtualBox on Windows.** A **green turtle** at the bottom right of the VirtualBox window means it is running without hardware acceleration, many times slower. Switch the appliance off, then in Windows open **Turn Windows features on or off** and untick **Hyper-V**, **Virtual Machine Platform** and **Windows Hypervisor Platform**. In **Windows Security**, **Device security**, **Core isolation details**, set **Memory integrity** to **Off**. Restart the computer and start the appliance again. The turtle becomes a blue chip with a V.
+- **Memory.** The appliance needs 4096 MB for itself. On a laptop, close other programs while it runs.
+- **Any computer.** Hardware virtualisation (Intel VT-x or AMD-V) must be switched on in the computer's firmware settings.
+- **The browser says "refused to connect".** The address is right but the platform is not running yet. Wait until the screen says **Running.**, and type the address with `https://`.
+- **The browser says "can't be reached" in VirtualBox over Wi-Fi.** Some Wi-Fi cards do not allow Bridged Adapter. For a test on one laptop, use **Host-only Adapter** instead and open the `192.168.56.` address it shows.
+
+To send a log to whoever supports you: in VirtualBox, with the appliance switched off, open **Settings**, **Serial Ports**, **Port 1**, tick **Enable Serial Port**, choose **Raw File**, type a path such as `C:\Users\Public\htm-log.txt`, start the appliance, and send that file.
 
 ## 3. Run the setup wizard
 
@@ -267,7 +281,7 @@ Not yet tested:
 - The appliance in VirtualBox, VMware or Hyper-V themselves, and the USB installer on a real computer. They were tested in QEMU, which emulates a standard computer; each product's own virtual hardware, and each computer's firmware, can differ. The `.ova` and the Hyper-V file were built but not imported anywhere.
 - The appliance with the official images. The appliance tested here carried compatible stand ins, because the official images could not be downloaded in our test environment. The release workflow builds each version's appliance from the official images and runs the same tests on it, with KVM, before publishing; until that has run, treat the downloads as untested.
 - Backups, restoring and moving to a new version on the appliance itself. The commands are the ones tested on a Docker installation, run in `/opt/htm`.
-- The maintenance sign in at the appliance's keyboard. Its password is set from the setup code on the first start, but signing in with it was not tried.
+- The maintenance sign in at the appliance's keyboard. Its first password is set and shown on the first start, but signing in with it was not tried.
 - HTTPS was tested with Caddy 2.6.2 from Ubuntu, not the official Caddy image, for the same reason. `scripts/hospital_smoke.sh` checks it against the official image on every pull request once the repository is on GitHub.
 - The Windows installer, scheduled task, audit policy and event reading on a real Windows computer. Windows was not available in our test environment. A check that does all of this on a Windows computer runs on every pull request once the repository is on GitHub; until it has run, treat them as untested.
 - Real routers and firewalls. The formats were tested with example messages, not captured from devices. A device that writes its logs differently may need a new reader, and the page shows what it sends.

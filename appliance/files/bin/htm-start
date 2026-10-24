@@ -1,7 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 # Healthcare Threat Monitor appliance: starts the platform at this computer's address.
-set -eu
+set -euo pipefail
 cd /opt/htm
+# Only once the first start has loaded everything. It may still be running, or be trying again.
+until [ -f /var/lib/htm/firstboot-done ]; do sleep 10; done
 ip=""
 for _ in $(seq 1 120); do
   ip=$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p')
@@ -13,8 +15,9 @@ done
 [ -n "$ip" ] || { echo "htm-start: no network address after two minutes"; exit 1; }
 mkdir -p /var/lib/htm
 previous=$(cat /var/lib/htm/address 2>/dev/null || true)
-[ -n "$previous" ] && [ "$previous" != "$ip" ] && echo "$previous" > /var/lib/htm/previous-address
+if [ -n "$previous" ] && [ "$previous" != "$ip" ]; then echo "$previous" > /var/lib/htm/previous-address; fi
 echo "$ip" > /var/lib/htm/address
+echo "Starting the platform." > /run/htm-status
 # Docker Compose reads this file. The address is what staff type, and what the HTTPS certificate is made for.
 printf 'HTM_HOSTNAME=%s\nCOMPOSE_FILE=docker-compose.hospital.yml\n' "$ip" > /opt/htm/.env
 exec docker compose up -d --no-build --pull never --remove-orphans
