@@ -15,7 +15,7 @@ jobs:
       run:
         working-directory: web
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -33,7 +33,7 @@ jobs:
       run:
         working-directory: engine
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -63,7 +63,7 @@ jobs:
       SIEM_WEBHOOK_KEY: ci_only_siem_key_0123456789abcdef01234567
       HTM_API_URL: http://localhost:3000
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Create the public roles Supabase provides
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "create role anon nologin; create role authenticated nologin;" \
@@ -121,7 +121,7 @@ jobs:
   one_command_demo:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Start the demo from nothing and catch an attack
         run: sh scripts/demo_smoke.sh
       - name: Stop the demo
@@ -131,7 +131,7 @@ jobs:
   hospital_install:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Start a hospital installation from nothing, over HTTPS, and check it is locked down
         run: sh scripts/hospital_smoke.sh
       - name: Stop the installation
@@ -142,7 +142,7 @@ jobs:
     # The appliance's own scripts. The full appliance is built and started in release.yml for each version.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check the appliance scripts
         run: |
           sudo apt-get update -q && sudo apt-get install -y -q shellcheck libxml2-utils
@@ -160,7 +160,7 @@ jobs:
     env:
       CI_SECRET: ci_only_windows_secret_0123456789abcdef
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
