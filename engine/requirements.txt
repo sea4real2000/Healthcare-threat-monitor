@@ -6,4 +6,4 @@ psycopg[binary]>=3.2,<4
 numpy>=2.0,<3
 scikit-learn>=1.5,<2
 PyMySQL>=1.1.1,<2
-cryptography>=44,<51
+cryptography>=50.0.2,<51
