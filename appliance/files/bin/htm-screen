@@ -130,6 +130,17 @@ while true; do
     echo "  Maintenance only: press $keys and sign in as htm."
   fi
   })
+  # While it is not running, the state of each part of the platform goes to the serial console every 10 minutes,
+  # so a log taken from a stuck installation shows which part is stuck and why.
+  if [ "$running" != yes ] && [ -f /var/lib/htm/firstboot-done ] && [ -c /dev/ttyS0 ] && [ $(( $(date +%s) - ${reported:-0} )) -ge 600 ]; then
+    reported=$(date +%s)
+    {
+      timeout 120 docker compose ps -a --format 'htm-parts: {{.Service}} {{.State}} {{.Status}}' 2>&1
+      for part in secrets setup db console https; do
+        timeout 60 docker compose logs --no-color --tail 3 "$part" 2>&1 | sed "s/^/htm-log: /"
+      done
+    } > /dev/ttyS0 2>/dev/null || true
+  fi
   clear
   echo "$screen"
   # A server without a screen may have a serial console instead. It gets the same text, when it changes.

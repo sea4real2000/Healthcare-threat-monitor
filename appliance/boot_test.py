@@ -223,7 +223,9 @@ def appliance_check(disk, label):
         if not m:
             tail = open(log, errors='replace').read()[-4000:]
             print(tail)
-            annotate('The setup code never appeared. End of the serial console: ' + tail[-2500:])
+            whole = open(log, errors='replace').read()
+            steps = [line for line in whole.splitlines() if re.match(r'(htm login: )?htm-(firstboot|start|parts|log):', line)]
+            annotate('The setup code never appeared. What the appliance reported: ' + ' | '.join(steps[-60:]))
             return
         text = open(log, errors='replace').read()
         ok(f'{label}: the screen says it is running', 'Running.' in text)
