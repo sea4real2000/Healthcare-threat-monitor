@@ -1,11 +1,11 @@
-# Builds the appliance for each version, tests it by starting it, and publishes it as a GitHub release.
-# Runs when a version tag such as v0.8.0 is pushed. Can also be started by hand from the Actions tab, which
-# builds and tests without publishing.
+# Builds the appliance for each version, tests it by starting it, and attaches the downloads to the release.
+# Runs when a release is published on GitHub (Releases, Draft a new release, a new tag such as v0.8.0,
+# Publish release). Can also be started by hand from the Actions tab, which builds and tests without publishing.
 name: release
 
 on:
-  push:
-    tags: ["v*"]
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -61,10 +61,8 @@ jobs:
           path: dist/
           retention-days: 14
 
-      - name: Publish the release
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Attach the downloads to the release
+        if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "$GITHUB_REF_NAME" dist/* --title "Healthcare Threat Monitor ${GITHUB_REF_NAME#v}" \
-            --notes "Downloads for a hospital installation. See docs/hospital_install.md. Check each download against SHA256SUMS."
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/* --clobber
