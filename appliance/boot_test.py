@@ -153,6 +153,13 @@ def totp(secret):
     return f"{(struct.unpack('>I', mac[o:o + 4])[0] & 0x7fffffff) % 1000000:06d}"
 
 
+def arrive(page, pattern):
+    """Waits for the address to change, then for the page's content. The full load event is not awaited,
+    because a slow image or font says nothing about whether the step worked."""
+    page.wait_for_url(pattern, wait_until='commit', timeout=TIMEOUT_MS)
+    page.wait_for_load_state('domcontentloaded', timeout=TIMEOUT_MS)
+
+
 def first_visit(base, code):
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
@@ -161,18 +168,21 @@ def first_visit(base, code):
         # Without KVM every page is slow, so wait longer than a browser would on real hardware.
         ctx.set_default_timeout(TIMEOUT_MS)
         pg = ctx.new_page()
-        pg.goto(base + '/'); ok('the first visit goes straight to setting up the administrator', pg.url.endswith('/welcome'), pg.url)
+        # Anything the browser could not load is reported, as a sign of what a person would see broken.
+        failed = []
+        pg.on('requestfailed', lambda r: failed.append(f'{r.url} ({r.failure})'))
+        pg.goto(base + '/', wait_until='domcontentloaded'); ok('the first visit goes straight to setting up the administrator', pg.url.endswith('/welcome'), pg.url)
         pg.fill('input[name=code]', 'ABCDE FGHJK'); pg.fill('input[name=name]', 'Ada Obi'); pg.fill('input[name=email]', 'ada@hospital.example')
-        pg.click('button[type=submit]'); pg.wait_for_url('**error=code**')
+        pg.click('button[type=submit]'); arrive(pg, '**error=code**')
         ok('a wrong setup code is refused', 'does not match' in pg.inner_text('main'))
         pg.fill('input[name=code]', code.replace(' ', '').lower()); pg.fill('input[name=name]', 'Ada Obi'); pg.fill('input[name=email]', 'ada@hospital.example')
-        pg.click('button[type=submit]'); pg.wait_for_url('**/setup?token=**')
+        pg.click('button[type=submit]'); arrive(pg, '**/setup?token=**')
         pw = 'ward seven lantern quiet 2026'
         pg.fill('input[name=password]', pw); pg.fill('input[name=confirm]', pw); pg.click('button[type=submit]'); pg.wait_for_selector('img.qr')
         sec = re.search(r'into the app: ([A-Z2-7 ]+)', pg.inner_text('body')).group(1).strip()
-        pg.fill('input[name=code]', totp(sec)); pg.click('button[type=submit]'); pg.wait_for_url('**/console/**')
+        pg.fill('input[name=code]', totp(sec)); pg.click('button[type=submit]'); arrive(pg, '**/console/**')
         ok('the administrator reaches the console with the code from the screen, nothing typed in a terminal', '/console' in pg.url, pg.url)
-        pg.goto(base + '/console/sources/windows')
+        pg.goto(base + '/console/sources/windows', wait_until='domcontentloaded')
         ok('the Windows page offers the certificate authority for browsers', pg.locator('a[href="/api/trust/root"]').count() == 1)
         root = pg.request.get(base + '/api/trust/root')
         pem = root.text() if root.ok else ''
@@ -189,8 +199,11 @@ def first_visit(base, code):
         ok('a browser trusting some other authority still gets the warning', other.returncode == 60, f'curl exit {other.returncode}')
         anon_ctx = b.new_context(ignore_https_errors=True); anon_ctx.set_default_timeout(TIMEOUT_MS)
         anon = anon_ctx.new_page()
-        anon.goto(base + '/welcome'); ok('then the setup page is closed', anon.url.endswith('/signin'), anon.url)
+        anon.goto(base + '/welcome', wait_until='domcontentloaded'); ok('then the setup page is closed', anon.url.endswith('/signin'), anon.url)
         ok('the certificate authority is not offered to someone not signed in', anon.request.get(base + '/api/trust/root').status == 401)
+        if failed:
+            print('requests that failed:', *failed[:20], sep='\n  ')
+            annotate('Requests the browser could not complete: ' + ' | '.join(failed[:10]))
         b.close()
 
 

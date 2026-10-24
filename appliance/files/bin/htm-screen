@@ -12,7 +12,7 @@ while true; do
   [ -f /var/lib/htm/firstboot-done ] || state="Preparing for first use. This takes a few minutes, once."
   pending=no
   # Asked by this computer's address, as staff will: the HTTPS server answers only to that name.
-  if [ -n "$ip" ] && curl -sfk --max-time 4 --resolve "$ip:443:127.0.0.1" -o /dev/null "https://$ip/api/health"; then
+  if [ -n "$ip" ] && curl -sfk --max-time 10 --resolve "$ip:443:127.0.0.1" -o /dev/null "https://$ip/api/health"; then
     state="Running."
     # The same question the console asks: is there a setup code, and still no active administrator?
     answer=$(docker compose exec -T db psql -U htm -d htm -Atc "select exists (select 1 from engine_state where key = 'first_run')
