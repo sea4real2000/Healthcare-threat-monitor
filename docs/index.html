@@ -100,7 +100,7 @@
       <h1>Security monitoring for hospitals, free and open source.</h1>
       <p class="lede">Healthcare Threat Monitor watches a hospital's security logs, catches ransomware and improper access to patient records, and keeps a person in charge of every response. It runs on the hospital's own computer and is installed with clicks.</p>
       <div class="buttons">
-        <a class="button primary" href="https://github.com/sea4real2000/Healthcare-threat-monitor/releases/latest">Download version 0.8.0</a>
+        <a class="button primary" href="https://github.com/sea4real2000/Healthcare-threat-monitor/releases/latest">Download the latest version</a>
         <a class="button ghost" href="hospital_install.html">Read the install guide</a>
       </div>
     </div>
@@ -143,6 +143,10 @@
       </div>
     </div>
     <p class="caption" style="text-align:left">Needs 2 processors, 4 GB of memory and 20 GB of disk. Each release lists a checksum for every file. Hospitals already running Docker can use it on their own Linux server instead; see the <a href="hospital_install.html">install guide</a>.</p>
+    <div class="card" style="margin-top:18px">
+      <h3>The first start</h3>
+      <p>The first start loads the platform's software in five parts and shows its progress on screen. It takes 5 to 15 minutes on a normal computer, can be switched off at any point, and carries on where it was. Nothing needs to be typed on the appliance itself. In VirtualBox on Windows, a green turtle at the bottom right of the window means it is running slowly: switch off Hyper-V and Memory integrity in Windows and restart. More in <a href="hospital_install.html#if-the-first-start-seems-stuck">If the first start seems stuck</a>.</p>
+    </div>
   </section>
 
   <section id="watches">
@@ -183,7 +187,7 @@
       <ul>
         <li>It has been tested on simulated and sample data. It has not yet run in a real hospital.</li>
         <li>It has not had an independent security review.</li>
-        <li>The virtual machine and USB installer are tested automatically in an emulator for every release. They have not yet been tried by a hospital.</li>
+        <li>The virtual machine and USB installer are tested automatically in an emulator for every release, including being switched off part way through their first start. The first try on a real laptop found that a slow first start could get stuck, which version 0.8.1 fixes. They have not yet been tried by a hospital.</li>
       </ul>
       <p>Hospitals are welcome to try it and review the code. Please do not connect it to real patient systems until it has been piloted and reviewed for your setting.</p>
     </div>
