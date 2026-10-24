@@ -40,6 +40,8 @@ jobs:
           cache: pip
           cache-dependency-path: engine/requirements.txt
       - run: pip install -r requirements.txt
+      - name: Lint the Python code for errors and unused names
+        run: pip install ruff==0.16.8 && ruff check --select E9,F . ../scripts ../appliance
       - run: python -m unittest discover -s tests -v
 
   database_and_end_to_end:

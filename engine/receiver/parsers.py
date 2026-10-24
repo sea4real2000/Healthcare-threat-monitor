@@ -152,7 +152,7 @@ def _action_from_words(text: str) -> str:
 
 ASA = re.compile(r"%(?:ASA|FTD)-\d-(\d{6}): (.*)", re.S)
 ADDR = r"(?:(\S+?):)?([0-9a-fA-F:.]+)/(\d+)"
-ASA_106001 = re.compile(rf"Inbound (\w+) connection denied from ([0-9a-fA-F:.]+)/(\d+) to ([0-9a-fA-F:.]+)/(\d+)")
+ASA_106001 = re.compile(r"Inbound (\w+) connection denied from ([0-9a-fA-F:.]+)/(\d+) to ([0-9a-fA-F:.]+)/(\d+)")
 ASA_106006 = re.compile(r"Deny (?:inbound|outbound) (\w+) from ([0-9a-fA-F:.]+)/(\d+) to ([0-9a-fA-F:.]+)/(\d+)")
 ASA_106015 = re.compile(r"Deny (\w+) \(no connection\) from ([0-9a-fA-F:.]+)/(\d+) to ([0-9a-fA-F:.]+)/(\d+)")
 ASA_106023 = re.compile(rf"Deny (\w+) src {ADDR} dst {ADDR}(?: \(type \d+, code \d+\))? by access-group \"([^\"]+)\"")

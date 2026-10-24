@@ -2,6 +2,16 @@
 
 Thank you for helping. A few rules keep the project consistent.
 
+## Reporting a bug or asking for a feature
+
+Open an issue on GitHub at https://github.com/sea4real2000/Healthcare-threat-monitor/issues. Say what you did, what you expected and what happened instead, and include the version from the release you installed. Issues are public, so never include patient data, passwords or anything from a real hospital. Security problems are reported privately instead, as described in [SECURITY.md](SECURITY.md).
+
+Issues and pull requests are written in English.
+
+## Tests for new functionality
+
+Every new feature or connection comes with automated tests in the same pull request, and every bug fix comes with a test that fails without the fix. A pull request that adds behaviour without tests is not merged. The checks in `.github/workflows/ci.yml` run on every pull request and must all pass.
+
 ## Before you open a pull request
 
 1. Run the tests listed in the README. All of them must pass.

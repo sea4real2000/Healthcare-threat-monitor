@@ -284,6 +284,8 @@ For each version, `.github/workflows/release.yml` builds the appliance, starts t
 
 ## More to read
 
+- [CHANGELOG.md](CHANGELOG.md): what changed in each version, and the vulnerabilities each one fixed.
+- Bugs and feature requests: [GitHub issues](https://github.com/sea4real2000/Healthcare-threat-monitor/issues). Security problems: privately, as in [SECURITY.md](SECURITY.md).
 - [docs/hospital_install.md](docs/hospital_install.md): installing in a hospital, connecting patient records, backups
 - [docs/detection.md](docs/detection.md): how rules, models, confidence and feedback work
 - [docs/threat_model.md](docs/threat_model.md): how the platform itself could be attacked, and what stands in the way

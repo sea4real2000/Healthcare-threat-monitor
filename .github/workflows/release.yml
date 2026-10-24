@@ -77,4 +77,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
-        run: gh release upload "$TAG" dist/* --clobber
+        run: |
+          gh release upload "$TAG" dist/* --clobber
+          # The release notes are this version's section of CHANGELOG.md.
+          version=$(node -p "require('./web/package.json').version")
+          awk -v v="## $version" '$0 == v {on = 1; next} on && /^## / {exit} on' CHANGELOG.md > notes.md
+          if [ -s notes.md ]; then gh release edit "$TAG" --notes-file notes.md; fi
