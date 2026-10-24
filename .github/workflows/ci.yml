@@ -166,9 +166,6 @@ jobs:
         run: dotnet run --project web/collectors/windows/tests/CollectorTests.csproj -- unit
       - name: Install the collector as an administrator would
         run: |
-          $rx = Join-Path $env:RUNNER_TEMP 'received.jsonl'
-          Start-Process -FilePath python -ArgumentList 'scripts/windows_ci_receiver.py', $env:CI_SECRET, $rx -RedirectStandardOutput (Join-Path $env:RUNNER_TEMP 'rx.log')
-          Start-Sleep -Seconds 2
           $kit = Join-Path $env:RUNNER_TEMP 'kit'
           New-Item -ItemType Directory -Path $kit | Out-Null
           Copy-Item web/collectors/windows/*.ps1, web/collectors/windows/*.cs $kit
@@ -185,6 +182,7 @@ jobs:
             Write-Host "::error title=Windows collector check::$($_.Exception.Message) Collector log: $tail"
             exit 1
           }
+          & ./scripts/windows_ci_start_receiver.ps1 -Secret $env:CI_SECRET -Output (Join-Path $env:RUNNER_TEMP 'received.jsonl')
           # A failed sign in, and a process with a command line the platform should see.
           Add-Type -Namespace Ci -Name Logon -MemberDefinition '[DllImport("advapi32.dll", SetLastError = true)] public static extern bool LogonUser(string user, string domain, string password, int type, int provider, out IntPtr token);'
           $token = [IntPtr]::Zero
@@ -216,6 +214,8 @@ jobs:
           exit 0
       - name: A wrong secret is refused and explained
         run: |
+          trap { Write-Host "::error title=Windows wrong secret check::$($_.Exception.Message)"; exit 1 }
+          & ./scripts/windows_ci_start_receiver.ps1 -Secret $env:CI_SECRET -Output (Join-Path $env:RUNNER_TEMP 'received.jsonl')
           $dir = Join-Path $env:ProgramData 'HealthcareThreatMonitor'
           $config = Get-Content -Raw (Join-Path $dir 'config.json') | ConvertFrom-Json
           $config.secret = 'not the right secret'
@@ -238,3 +238,4 @@ jobs:
         run: |
           Get-Content (Join-Path $env:ProgramData 'HealthcareThreatMonitor\collector.log') -ErrorAction SilentlyContinue
           Get-Content (Join-Path $env:RUNNER_TEMP 'rx.log') -ErrorAction SilentlyContinue
+          Get-Content (Join-Path $env:RUNNER_TEMP 'rx.err.log') -ErrorAction SilentlyContinue
