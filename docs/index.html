@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Healthcare Threat Monitor</title>
+<meta name="description" content="Free, open source security monitoring for hospitals. Catches ransomware and improper access to patient records, and keeps a person in charge of every response.">
+<meta property="og:title" content="Healthcare Threat Monitor">
+<meta property="og:description" content="Free, open source security monitoring for hospitals, installed with clicks on the hospital's own computer.">
+<meta property="og:image" content="assets/overview.webp">
+<style>
+  :root {
+    --navy: #0b1d55;
+    --blue: #1a5cff;
+    --blue-soft: #e8efff;
+    --ink: #0e1630;
+    --muted: #4b5675;
+    --line: #d9e1f2;
+    --page: #f6f8fd;
+    --card: #ffffff;
+    --amber: #8a5a00;
+    --amber-soft: #fff6e0;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); background: var(--page); line-height: 1.6; }
+  a { color: var(--blue); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  header.top { background: var(--navy); color: #fff; }
+  header.top nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; flex-wrap: wrap; }
+  header.top .brand { font-weight: 800; font-size: 18px; color: #fff; text-decoration: none; }
+  header.top nav ul { list-style: none; display: flex; gap: 22px; margin: 0; padding: 0; flex-wrap: wrap; }
+  header.top nav ul a { color: #cfd9ff; text-decoration: none; font-size: 15px; }
+  header.top nav ul a:hover { color: #fff; }
+  .hero { padding: 56px 0 64px; }
+  .hero h1 { font-size: clamp(32px, 5vw, 52px); line-height: 1.1; margin: 0 0 18px; letter-spacing: -0.5px; }
+  .hero p.lede { font-size: clamp(17px, 2.2vw, 21px); color: #dbe3ff; max-width: 720px; margin: 0 0 30px; }
+  .buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+  .button { display: inline-block; padding: 13px 22px; border-radius: 999px; font-weight: 700; text-decoration: none; font-size: 16px; }
+  .button.primary { background: var(--blue); color: #fff; }
+  .button.primary:hover { background: #0f49d6; }
+  .button.ghost { border: 1.5px solid #8ea6ff; color: #fff; }
+  .button.ghost:hover { background: rgba(255,255,255,0.08); }
+  .button.dark { background: var(--navy); color: #fff; }
+  .shot { margin: -30px auto 0; max-width: 1080px; padding: 0 20px; }
+  .shot img { width: 100%; height: auto; display: block; border-radius: 14px; border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(11, 29, 85, 0.18); }
+  .caption { font-size: 14px; color: var(--muted); margin-top: 10px; text-align: center; }
+  section { padding: 64px 0 8px; }
+  h2 { font-size: clamp(26px, 3.4vw, 34px); margin: 0 0 10px; letter-spacing: -0.3px; }
+  .intro { color: var(--muted); max-width: 720px; margin: 0 0 30px; font-size: 18px; }
+  .grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+  .card h3 { margin: 0 0 8px; font-size: 18px; }
+  .card p { margin: 0; color: var(--muted); }
+  .steps { counter-reset: step; display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .steps .card { position: relative; padding-top: 58px; }
+  .steps .card::before { counter-increment: step; content: counter(step); position: absolute; top: 18px; left: 22px; width: 30px; height: 30px; border-radius: 50%; background: var(--blue-soft); color: var(--blue); font-weight: 800; display: grid; place-items: center; }
+  .paths { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: 22px; }
+  .paths .card h3 { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .paths .file { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; color: var(--muted); font-weight: 400; }
+  .paths ol { margin: 10px 0 0; padding-left: 20px; color: var(--muted); }
+  .two { display: grid; gap: 32px; grid-template-columns: 1fr 1fr; align-items: center; }
+  .two img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); }
+  ul.ticks { list-style: none; padding: 0; margin: 0; }
+  ul.ticks li { padding: 10px 0 10px 30px; position: relative; border-bottom: 1px solid var(--line); }
+  ul.ticks li:last-child { border-bottom: 0; }
+  ul.ticks li::before { content: ""; position: absolute; left: 4px; top: 18px; width: 12px; height: 7px; border-left: 2.5px solid var(--blue); border-bottom: 2.5px solid var(--blue); transform: rotate(-45deg); }
+  .status { background: var(--amber-soft); border: 1px solid #f0d58f; border-radius: 14px; padding: 26px; }
+  .status h2 { color: var(--amber); }
+  .status ul { margin: 12px 0 0; padding-left: 20px; }
+  .links { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .links a.card { text-decoration: none; color: var(--ink); }
+  .links a.card:hover { border-color: var(--blue); }
+  .links a.card span { display: block; color: var(--muted); font-size: 15px; margin-top: 4px; }
+  footer { margin-top: 72px; background: var(--navy); color: #cfd9ff; padding: 36px 0; font-size: 15px; }
+  footer a { color: #fff; }
+  footer .row { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  @media (max-width: 760px) {
+    .two { grid-template-columns: 1fr; }
+    .hero { padding: 40px 0 56px; }
+    header.top nav ul { gap: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <nav>
+      <a class="brand" href="#">Healthcare Threat Monitor</a>
+      <ul>
+        <li><a href="#install">Install</a></li>
+        <li><a href="#watches">What it watches</a></li>
+        <li><a href="#status">Status</a></li>
+        <li><a href="#read">Read more</a></li>
+        <li><a href="https://github.com/sea4real2000/Healthcare-threat-monitor">Source code</a></li>
+      </ul>
+    </nav>
+    <div class="hero">
+      <h1>Security monitoring for hospitals, free and open source.</h1>
+      <p class="lede">Healthcare Threat Monitor watches a hospital's security logs, catches ransomware and improper access to patient records, and keeps a person in charge of every response. It runs on the hospital's own computer and is installed with clicks.</p>
+      <div class="buttons">
+        <a class="button primary" href="https://github.com/sea4real2000/Healthcare-threat-monitor/releases/latest">Download the latest version</a>
+        <a class="button ghost" href="hospital_install.html">Read the install guide</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="shot">
+  <img src="assets/overview.webp" width="1440" height="1000" alt="The console's overview page: events per minute from every log source, with one high confidence incident open.">
+  <p class="caption">The console, watching a simulated hospital. No real patient, staff member or hospital appears anywhere in the project.</p>
+</div>
+
+<main class="wrap">
+
+  <section>
+    <h2>How it works</h2>
+    <p class="intro">Hospitals are attacked because their records are valuable and their systems cannot stop. Most cannot afford a security team watching around the clock. This platform does the watching and leaves the decisions to people.</p>
+    <div class="steps">
+      <div class="card"><h3>Collect</h3><p>Reads who opened which patient record, and the logs of Windows computers, routers, firewalls and servers.</p></div>
+      <div class="card"><h3>Detect</h3><p>Rules catch clear signs of attack, such as backups being deleted. Models learn what is normal in this hospital and flag what is not.</p></div>
+      <div class="card"><h3>Review</h3><p>Related warnings are joined into one incident with the evidence behind it, so an analyst sees the whole story at once.</p></div>
+      <div class="card"><h3>Respond</h3><p>A person approves every action, such as cutting a computer off the network. Every step is kept in a tamper evident audit log.</p></div>
+    </div>
+  </section>
+
+  <section id="install">
+    <h2>Install with clicks</h2>
+    <p class="intro">Download one file from the latest release. When it starts, its screen shows the address to open and a setup code. Open that address in a browser on another computer, enter the code, and set up the first administrator. Nothing is typed in a terminal.</p>
+    <div class="paths">
+      <div class="card">
+        <h3>VirtualBox or VMware <span class="file">.ova</span></h3>
+        <ol><li>Choose File, Import Appliance, and pick the file.</li><li>Set its network to Bridged.</li><li>Start it.</li></ol>
+      </div>
+      <div class="card">
+        <h3>Hyper-V <span class="file">hyperv.zip</span></h3>
+        <ol><li>Unzip it and make a Generation 2 virtual machine with the disk inside.</li><li>Set Secure Boot to Microsoft UEFI Certificate Authority.</li><li>Start it.</li></ol>
+      </div>
+      <div class="card">
+        <h3>A spare computer <span class="file">usb.img.xz</span></h3>
+        <ol><li>Write it to a USB stick with balenaEtcher or Rufus.</li><li>Start the computer from the stick.</li><li>Choose the disk and type ERASE.</li></ol>
+      </div>
+    </div>
+    <p class="caption" style="text-align:left">Needs 2 processors, 4 GB of memory and 20 GB of disk. Each release lists a checksum for every file. Hospitals already running Docker can use it on their own Linux server instead; see the <a href="hospital_install.html">install guide</a>.</p>
+  </section>
+
+  <section id="watches">
+    <div class="two">
+      <div>
+        <h2>What it watches</h2>
+        <p class="intro">After installing, a setup wizard and short forms connect each source. A seven day learning period teaches it what is normal in your hospital, while clear signs of attack are reported from day one.</p>
+        <ul class="ticks">
+          <li><strong>Patient record access</strong>, through a read only connection to the record system's database, its FHIR server, or an uploaded report.</li>
+          <li><strong>Windows computers</strong>, through a small, readable collector installed from one downloaded file.</li>
+          <li><strong>Routers, firewalls and servers</strong>, which send their logs to a built in receiver once an administrator accepts them.</li>
+        </ul>
+      </div>
+      <img src="assets/sources.webp" width="1366" height="1200" loading="lazy" alt="The Sources page: a connected FHIR record system, an accepted edge firewall, Windows computers and the learning period for each source.">
+    </div>
+  </section>
+
+  <section>
+    <h2>Built to be trusted with a hospital</h2>
+    <div class="grid">
+      <div class="card"><h3>Stays in the hospital</h3><p>Everything runs on the hospital's own computer. Nothing is sent to the project or to anyone else.</p></div>
+      <div class="card"><h3>Strong sign in</h3><p>Every account needs a password and an authenticator app. Accounts lock after repeated failures.</p></div>
+      <div class="card"><h3>Every action recorded</h3><p>A chained audit log shows any change to past entries, and can be checked independently.</p></div>
+      <div class="card"><h3>Open to inspection</h3><p>The code, the tests and a written threat model are public, under the Apache License 2.0.</p></div>
+    </div>
+  </section>
+
+  <section id="status">
+    <div class="status">
+      <h2>Where the project stands</h2>
+      <p>This is a research prototype, not yet a finished product for live clinical use.</p>
+      <ul>
+        <li>It has been tested on simulated and sample data. It has not yet run in a real hospital.</li>
+        <li>It has not had an independent security review.</li>
+        <li>The virtual machine and USB installer are tested automatically in an emulator for every release. They have not yet been tried by a hospital.</li>
+      </ul>
+      <p>Hospitals are welcome to try it and review the code. Please do not connect it to real patient systems until it has been piloted and reviewed for your setting.</p>
+    </div>
+  </section>
+
+  <section id="read">
+    <h2>Read more</h2>
+    <div class="links">
+      <a class="card" href="assets/healthcare_threat_monitor_explained.pdf"><strong>The project explained</strong><span>A plain language guide for hospital leaders.</span></a>
+      <a class="card" href="assets/healthcare_threat_monitor_white_paper.pdf"><strong>White paper</strong><span>The method and how detection was measured.</span></a>
+      <a class="card" href="hospital_install.html"><strong>Install guide</strong><span>Step by step, from download to connected sources.</span></a>
+      <a class="card" href="threat_model.html"><strong>Threat model</strong><span>How the platform itself could be attacked, and what limits it.</span></a>
+      <a class="card" href="https://github.com/sea4real2000/Healthcare-threat-monitor"><strong>Source code</strong><span>Everything, with its tests, on GitHub.</span></a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Get in touch</h2>
+    <p class="intro">Hospitals interested in a pilot, and security researchers with findings, can open an issue on GitHub. Please report security problems privately, as described in the project's security policy.</p>
+    <div class="buttons">
+      <a class="button dark" href="https://github.com/sea4real2000/Healthcare-threat-monitor/issues">Open an issue</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap row">
+    <span>Healthcare Threat Monitor. Open source under the <a href="https://github.com/sea4real2000/Healthcare-threat-monitor/blob/main/LICENSE">Apache License 2.0</a>.</span>
+    <span><a href="https://github.com/sea4real2000/Healthcare-threat-monitor">Source code on GitHub</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
