@@ -9,6 +9,7 @@ The appliance's first start, found stuck on a real laptop running VirtualBox in 
 **Fixed**
 
 - The first start can be switched off at any point and carries on from where it was on the next start. A part that fails to load is tried again, and nothing is cut short on a slow computer. Before, a first start stopped part way could leave the platform unable to start.
+- If the platform fails to start after a first start that was switched off part way, Docker's store is rebuilt from the image files, which now stay on the disk. This only happens before the platform has ever started, so no data can be lost.
 - The screen shows which part of the first start it is on and for how long, and after 25 minutes explains that the computer is running it slowly, with what to change in VirtualBox and Windows.
 - Start up messages no longer print over the screen.
 - The maintenance account has its own first password, shown on the screen from the very first start, so it can be used even before the platform runs. It was the setup code, which only appears once the platform runs.

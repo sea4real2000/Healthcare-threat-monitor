@@ -1,7 +1,8 @@
 #!/bin/bash
 # Healthcare Threat Monitor appliance: starts the platform at this computer's address.
-set -euo pipefail
-cd /opt/htm
+set -uo pipefail
+cd /opt/htm || exit 1
+log() { echo "htm-start: $*"; if [ -c /dev/ttyS0 ]; then echo "htm-start: $*" > /dev/ttyS0 2>/dev/null || true; fi; }
 # Only once the first start has loaded everything. It may still be running, or be trying again.
 until [ -f /var/lib/htm/firstboot-done ]; do sleep 10; done
 ip=""
@@ -12,12 +13,35 @@ for _ in $(seq 1 120); do
   [ -n "$ip" ] && break
   sleep 1
 done
-[ -n "$ip" ] || { echo "htm-start: no network address after two minutes"; exit 1; }
+[ -n "$ip" ] || { log "no network address after two minutes"; exit 1; }
 mkdir -p /var/lib/htm
 previous=$(cat /var/lib/htm/address 2>/dev/null || true)
 if [ -n "$previous" ] && [ "$previous" != "$ip" ]; then echo "$previous" > /var/lib/htm/previous-address; fi
 echo "$ip" > /var/lib/htm/address
-echo "Starting the platform." > /run/htm-status
 # Docker Compose reads this file. The address is what staff type, and what the HTTPS certificate is made for.
 printf 'HTM_HOSTNAME=%s\nCOMPOSE_FILE=docker-compose.hospital.yml\n' "$ip" > /opt/htm/.env
-exec docker compose up -d --no-build --pull never --remove-orphans
+
+echo "Starting the platform." > /run/htm-status
+# A slow computer can take a long time here, but not this long: a start that never ends counts as failed.
+if output=$(timeout 2700 docker compose up -d --no-build --pull never --remove-orphans 2>&1); then
+  touch /var/lib/htm/started-once
+  rm -f /var/lib/htm/start-failures
+  log "the platform is started"
+  exit 0
+fi
+log "the platform did not start: $(echo "$output" | tail -n 3 | tr '\n' ' ')"
+failures=$(( $(cat /var/lib/htm/start-failures 2>/dev/null || echo 0) + 1 ))
+echo "$failures" > /var/lib/htm/start-failures
+
+# Before the platform has ever started there is no data on this computer yet. If starting keeps failing then,
+# Docker's store was most likely damaged by switching off during the first start, so it is rebuilt from the
+# image files. Once the platform has started, nothing is ever wiped: the data matters more than starting.
+if [ ! -f /var/lib/htm/started-once ] && [ "$failures" -ge 2 ]; then
+  log "repairing Docker's store after an interrupted first start"
+  echo "Repairing after an interrupted first start. This loads the software again." > /run/htm-status
+  systemctl stop docker.socket docker.service containerd.service
+  rm -rf /var/lib/docker /var/lib/containerd /var/lib/htm/loaded /var/lib/htm/firstboot-done /var/lib/htm/start-failures
+  systemctl start containerd.service docker.service
+  /opt/htm/bin/htm-firstboot || exit 1
+fi
+exit 1

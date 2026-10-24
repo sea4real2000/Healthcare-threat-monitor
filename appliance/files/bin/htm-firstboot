@@ -25,14 +25,16 @@ else
 fi
 if resize2fs "$root" >/dev/null 2>&1; then log "file system fills the partition: $(df -h --output=size / | tail -1 | tr -d ' ')"; else log "could not grow the file system"; fi
 
-# Each image file is removed only once Docker has it, so a stopped start picks up the ones still to load.
+# The image files stay on the disk, so a damaged Docker store can always be rebuilt from them. A marker per part
+# records what Docker already has, so a first start that was switched off carries on where it was.
+mkdir -p /var/lib/htm/loaded
 mapfile -t files < <(ls /opt/htm/images/*.tar.zst 2>/dev/null)
-total=$(wc -l < /opt/htm/images.list)
-done_before=$(( total - ${#files[@]} ))
-i=$done_before
+total=${#files[@]}
+i=0
 for f in "${files[@]}"; do
   i=$((i + 1))
   name=$(basename "$f")
+  [ -f "/var/lib/htm/loaded/$name" ] && continue
   loaded=no
   for attempt in 1 2 3; do
     status "Loading the platform's software, part $i of $total. Each part can take several minutes."
@@ -45,7 +47,7 @@ for f in "${files[@]}"; do
     status "Could not load part $i of $total. Restart this computer to try again."
     exit 1
   fi
-  rm -f "$f"
+  touch "/var/lib/htm/loaded/$name"
 done
 
 # Every image the platform needs must now be in Docker, however the loading went.
