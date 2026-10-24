@@ -7,6 +7,9 @@ if [ "$virt" = "oracle" ]; then keys="Right Ctrl and F2, as VirtualBox catches A
 memory_mb=$(( $(awk '/MemTotal/ {print $2}' /proc/meminfo) / 1024 ))
 code=""
 last=""
+misses=3
+was_pending=no
+running=no
 
 # The maintenance account gets its own first password, shown here until someone signs in and changes it.
 # That works from the very first start, before the platform is running.
@@ -31,19 +34,32 @@ while true; do
   else
     state="Preparing for first use. This happens once."
   fi
-  running=no
   pending=no
-  # Asked by this computer's address, as staff will: the HTTPS server answers only to that name.
-  if [ -n "$ip" ] && curl -sfk --max-time 10 --resolve "$ip:443:127.0.0.1" -o /dev/null "https://$ip/api/health"; then
+  # Asked by this computer's address, as staff will: the HTTPS server answers only to that name. A slow computer
+  # can miss one check, so the platform counts as stopped only after three misses in a row.
+  if [ -n "$ip" ] && curl -sfk --max-time 30 --resolve "$ip:443:127.0.0.1" -o /dev/null "https://$ip/api/health"; then
+    misses=0
+  else
+    misses=$(( ${misses:-3} + 1 ))
+  fi
+  if [ "${misses:-3}" -lt 3 ]; then
     running=yes
     state="Running."
-    # The same question the console asks: is there a setup code, and still no active administrator?
-    answer=$(timeout 20 docker compose exec -T db psql -U htm -d htm -Atc "select exists (select 1 from engine_state where key = 'first_run')
-      and not exists (select 1 from users where role = 'admin' and status = 'active')" 2>/dev/null)
-    if [ "$answer" = "t" ]; then pending=yes; fi
+    # The first visit page answers itself (200) only while nobody has set up the administrator; after that it
+    # sends visitors to sign in.
+    welcome=$(curl -sk --max-time 30 --resolve "$ip:443:127.0.0.1" -o /dev/null -w '%{http_code}' "https://$ip/welcome")
+    case "$welcome" in
+      200) pending=yes ;;
+      30?) pending=no; code="" ;;
+      *) pending=$was_pending ;;
+    esac
+  else
+    running=no
   fi
+  was_pending=$pending
   if [ "$pending" = yes ] && [ -z "$code" ]; then
-    code=$(timeout 60 docker compose run --rm --no-deps -T secrets cat /secrets/setup_code 2>/dev/null | tr -d '\r\n')
+    # Read straight from the platform's private secrets storage on this computer: instant, even when slow.
+    code=$(tr -d '\r\n' < /var/lib/docker/volumes/healthcare-threat-monitor-hospital_secrets/_data/setup_code 2>/dev/null)
   fi
   maintenance=""
   if chage -l htm 2>/dev/null | grep -q "password must be changed"; then
