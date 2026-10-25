@@ -46,7 +46,7 @@ jobs:
         run: sudo KEEP_RAW=1 appliance/build.sh dist
 
       # Ubuntu's own Python refuses packages installed with pip, so the tests get their own.
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
