@@ -79,6 +79,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
         run: |
+          # Files from an earlier version on the same release are removed, so nobody downloads an old one by mistake.
+          for old in $(gh release view "$TAG" --json assets --jq '.assets[].name'); do
+            [ -e "dist/$old" ] || gh release delete-asset "$TAG" "$old" --yes
+          done
           gh release upload "$TAG" dist/* --clobber
           # The release notes are this version's section of CHANGELOG.md.
           version=$(node -p "require('./web/package.json').version")
