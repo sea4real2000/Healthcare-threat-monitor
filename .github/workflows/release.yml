@@ -67,7 +67,7 @@ jobs:
           xz -t *-usb.img.xz
 
       - name: Keep the downloads with this run
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: appliance
           path: dist/
