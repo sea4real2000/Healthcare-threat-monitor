@@ -23,25 +23,44 @@ printf 'HTM_HOSTNAME=%s\nCOMPOSE_FILE=docker-compose.hospital.yml\n' "$ip" > /op
 
 echo "Starting the platform." > /run/htm-status
 # A slow computer can take a long time here, but not this long: a start that never ends counts as failed.
+repair() {
+  log "repairing Docker's store: $1"
+  echo "Repairing after an interrupted first start. This loads the software again." > /run/htm-status
+  systemctl stop docker.socket docker.service containerd.service
+  rm -rf /var/lib/docker /var/lib/containerd /var/lib/htm/loaded /var/lib/htm/firstboot-done /var/lib/htm/start-failures
+  sync
+  systemctl start containerd.service docker.service
+  /opt/htm/bin/htm-firstboot || exit 1
+  exit 1
+}
+answering() { curl -sfk --max-time 30 --resolve "$ip:443:127.0.0.1" -o /dev/null "https://$ip/api/health"; }
+
 if output=$(timeout 2700 docker compose up -d --no-build --pull never --remove-orphans 2>&1); then
-  touch /var/lib/htm/started-once
   rm -f /var/lib/htm/start-failures
   log "the platform is started"
+  # Until the platform has answered once, there is nothing on this computer worth keeping. A part that keeps
+  # crashing then means software damaged by a power cut during the first start, and it is loaded again.
+  if [ ! -f /var/lib/htm/ran-once ]; then
+    crashing=0
+    for _ in $(seq 1 360); do
+      if answering; then touch /var/lib/htm/ran-once; sync; log "the platform answers"; exit 0; fi
+      if [ -n "$(docker compose ps --status restarting -q 2>/dev/null)" ]; then crashing=$((crashing + 1)); else crashing=0; fi
+      if [ "$crashing" -ge 6 ]; then
+        repair "$(docker compose ps --status restarting --format '{{.Service}}' | tr '\n' ' ')keeps crashing: $(docker compose logs --no-color --tail 1 2>&1 | tail -n 1)"
+      fi
+      sleep 10
+    done
+  fi
   exit 0
 fi
 log "the platform did not start: $(echo "$output" | tail -n 3 | tr '\n' ' ')"
 failures=$(( $(cat /var/lib/htm/start-failures 2>/dev/null || echo 0) + 1 ))
 echo "$failures" > /var/lib/htm/start-failures
 
-# Before the platform has ever started there is no data on this computer yet. If starting keeps failing then,
+# Before the platform has ever answered there is no data on this computer yet. If starting keeps failing then,
 # Docker's store was most likely damaged by switching off during the first start, so it is rebuilt from the
 # image files. Once the platform has started, nothing is ever wiped: the data matters more than starting.
-if [ ! -f /var/lib/htm/started-once ] && [ "$failures" -ge 2 ]; then
-  log "repairing Docker's store after an interrupted first start"
-  echo "Repairing after an interrupted first start. This loads the software again." > /run/htm-status
-  systemctl stop docker.socket docker.service containerd.service
-  rm -rf /var/lib/docker /var/lib/containerd /var/lib/htm/loaded /var/lib/htm/firstboot-done /var/lib/htm/start-failures
-  systemctl start containerd.service docker.service
-  /opt/htm/bin/htm-firstboot || exit 1
+if [ ! -f /var/lib/htm/ran-once ] && [ "$failures" -ge 2 ]; then
+  repair "starting failed $failures times"
 fi
 exit 1

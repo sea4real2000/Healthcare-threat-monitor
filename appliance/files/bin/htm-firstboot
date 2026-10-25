@@ -47,7 +47,11 @@ for f in "${files[@]}"; do
     status "Could not load part $i of $total. Restart this computer to try again."
     exit 1
   fi
+  # Written to the disk for certain before it counts as loaded: a power cut must never leave a part that only
+  # looks loaded. Docker itself does not wait for this.
+  sync
   touch "/var/lib/htm/loaded/$name"
+  sync
 done
 
 # Every image the platform needs must now be in Docker, however the loading went.
@@ -61,6 +65,8 @@ if [ -n "$missing" ]; then
   status "Some of the platform's software is missing. Restart this computer to try again."
   exit 1
 fi
+sync
 touch /var/lib/htm/firstboot-done
+sync
 status "Prepared."
 log "ready"

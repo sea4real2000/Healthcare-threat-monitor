@@ -9,7 +9,8 @@ The appliance's first start, found stuck on a real laptop running VirtualBox in 
 **Fixed**
 
 - The first start can be switched off at any point and carries on from where it was on the next start. A part that fails to load is tried again, and nothing is cut short on a slow computer. Before, a first start stopped part way could leave the platform unable to start.
-- If the platform fails to start after a first start that was switched off part way, Docker's store is rebuilt from the image files, which now stay on the disk. This only happens before the platform has ever started, so no data can be lost.
+- A power cut just after a part of the platform had loaded could leave that part damaged on the disk, so the HTTPS server crashed and the address never opened. Each part is now written to the disk for certain before it counts as loaded.
+- If a part still fails or keeps crashing before the platform has ever answered, Docker's store is rebuilt from the image files, which now stay on the disk. This only happens before first use, so no data can be lost.
 - The screen shows which part of the first start it is on and for how long, and after 25 minutes explains that the computer is running it slowly, with what to change in VirtualBox and Windows.
 - On a slow computer the screen could stay on "Starting" with no setup code, though the platform was running, because its own checks timed out. It now reads the setup code straight from the installation's storage and tolerates slow answers.
 - Start up messages no longer print over the screen.
