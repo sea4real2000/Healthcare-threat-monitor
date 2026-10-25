@@ -19,12 +19,17 @@ function collectorFile(name: string): string {
   return readFileSync(join(process.cwd(), 'collectors', 'windows', name), 'utf8');
 }
 
+// The root certificate never changes for the life of an installation, so once read it is kept.
+let cachedRoot: RootCertificate | null = null;
+
 /** The installation's own root certificate, served by its HTTPS server to the internal network. Null when there is none. */
 export async function rootCertificate(): Promise<RootCertificate | null> {
+  if (cachedRoot) return cachedRoot;
   const url = process.env.HTM_TRUST_URL;
   if (!url) return null;
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(3000), cache: 'no-store' });
+    // A slow computer can take a while to answer the first time; 3 seconds was not always enough.
+    const res = await fetch(url, { signal: AbortSignal.timeout(20000), cache: 'no-store' });
     if (!res.ok) return null;
     const text = (await res.text()).slice(0, MAX_CERT_BYTES);
     const match = /-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/.exec(text);
@@ -32,7 +37,8 @@ export async function rootCertificate(): Promise<RootCertificate | null> {
     const cert = new X509Certificate(match[0]);
     // Only a certificate authority belongs here. Anything else is ignored rather than trusted.
     if (!cert.ca) return null;
-    return { pem: `${match[0]}\n`, fingerprint: createHash('sha256').update(cert.raw).digest('hex') };
+    cachedRoot = { pem: `${match[0]}\n`, fingerprint: createHash('sha256').update(cert.raw).digest('hex') };
+    return cachedRoot;
   } catch {
     return null;
   }

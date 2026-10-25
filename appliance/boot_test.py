@@ -186,7 +186,12 @@ def first_visit(base, code):
         pg.fill('input[name=code]', totp(sec)); pg.click('button[type=submit]'); arrive(pg, '/console/')
         ok('the administrator reaches the console with the code from the screen, nothing typed in a terminal', '/console' in pg.url, pg.url)
         pg.goto(base + '/console/sources/windows', wait_until='domcontentloaded')
-        ok('the Windows page offers the certificate authority for browsers', pg.locator('a[href="/api/trust/root"]').count() == 1)
+        try:
+            pg.wait_for_selector('a[href="/api/trust/root"]', timeout=60000)
+            offered = True
+        except Exception:
+            offered = False
+        ok('the Windows page offers the certificate authority for browsers', offered)
         root = pg.request.get(base + '/api/trust/root')
         pem = root.text() if root.ok else ''
         with open(f'{work}/root.crt', 'w') as f:
