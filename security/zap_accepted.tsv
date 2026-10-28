@@ -1,0 +1,6 @@
+# Alerts from ZAP's scan that were checked by hand and accepted, one per line: the rule's number, its name, and why.
+# scripts/zap_check.py fails the scan on any other alert at or above its risk level. Remove a line to stop accepting it.
+# Each reason here is proven again on every run by the dynamic_analysis job in .github/workflows/ci.yml.
+10202	Absence of Anti-CSRF Tokens	The forms are Next.js server actions, which refuse any post whose Origin is not the installation itself. The job posts the setup form from another site and checks it is refused.
+10055	CSP: style-src unsafe-inline	React writes style attributes into pages, which needs inline styles. Scripts are still locked to a fresh nonce on every page, and inline styles cannot run code.
+10062	PII Disclosure	ZAP reads card numbers into digits that pass the card number check. On these pages they are the start of Next.js server action numbers, which are long hexadecimal hashes. The platform keeps no card numbers. The job fetches each page ZAP named and checks every match is inside a server action number.

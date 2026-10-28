@@ -1,0 +1,13 @@
+# How much of the engine's code the tests run. CI fails if it drops below fail_under, so raise fail_under
+# as tests are added, never lower it to make a change pass.
+[run]
+source = .
+omit =
+    tests/*
+    db_checks/*
+parallel = true
+
+[report]
+fail_under = 50
+skip_empty = true
+precision = 1

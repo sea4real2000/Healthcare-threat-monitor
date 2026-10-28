@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Tools
         run: |
@@ -46,7 +46,7 @@ jobs:
         run: sudo KEEP_RAW=1 appliance/build.sh dist
 
       # Ubuntu's own Python refuses packages installed with pip, so the tests get their own.
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -67,7 +67,7 @@ jobs:
           xz -t *-usb.img.xz
 
       - name: Keep the downloads with this run
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: appliance
           path: dist/

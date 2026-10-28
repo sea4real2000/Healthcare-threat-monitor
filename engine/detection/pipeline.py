@@ -73,13 +73,19 @@ def combine(confidences: list[float]) -> float:
     miss = 1.0
     for c in confidences:
         miss *= 1.0 - min(max(c, 0.0), 0.999)
-    return 1.0 - miss
+    combined = 1.0 - miss
+    # Checked on every run, in the tests and in use: agreement can only raise confidence, never past certainty.
+    assert 0.0 <= combined <= 1.0, combined
+    assert all(combined >= min(max(c, 0.0), 0.999) - 1e-9 for c in confidences), (combined, confidences)
+    return combined
 
 
 def band_for(confidence: float, sources: int, settings: dict) -> tuple[float, str]:
     """Caps confidence when too few independent log sources agree, then names the band."""
     if sources < settings["detection.high_min_sources"]:
         confidence = min(confidence, settings["detection.single_source_cap"])
+    assert 0.0 <= confidence <= 1.0, confidence
+    assert sources >= settings["detection.high_min_sources"] or confidence <= settings["detection.single_source_cap"], (confidence, sources)
     if confidence >= settings["detection.band_high"]:
         return confidence, "high"
     if confidence >= settings["detection.band_medium"]:
@@ -338,6 +344,10 @@ class Detector:
             if len(seen.evidence) < 12:
                 seen.evidence.extend(d.evidence[: 12 - len(seen.evidence)])
         created: list[dict] = []
+        for d in merged.values():
+            assert d.hits >= 1, (d.dedupe_key, d.hits)
+            assert 0.0 <= d.confidence <= 1.0, (d.dedupe_key, d.confidence)
+            assert d.last_seen_at is None or d.last_seen_at >= d.occurred_at, (d.dedupe_key, d.occurred_at, d.last_seen_at)
         with self.conn.cursor() as cur:
             for d in sorted(merged.values(), key=lambda x: x.occurred_at):
                 cur.execute("""
@@ -400,6 +410,7 @@ class Detector:
         cur.execute("""select detector_id, category, severity, confidence, sources, technique_id, host, actor_user, occurred_at, last_seen_at
             from alerts where incident_id = %s and not suppressed order by occurred_at""", (incident_id,))
         rows = cur.fetchall()
+        assert rows, f"incident {incident_id} has no alerts to score"
         best: dict[str, float] = {}
         for r in rows:
             best[r["detector_id"]] = max(best.get(r["detector_id"], 0.0), float(r["confidence"]))
@@ -416,6 +427,8 @@ class Detector:
         before = cur.fetchone()
         medium_at = before["medium_at"] or (at if band in ("medium", "high") else None)
         high_at = before["high_at"] or (at if band == "high" else None)
+        # An incident that has been high has been medium too.
+        assert high_at is None or medium_at is not None, (incident_id, medium_at, high_at)
         cur.execute("""update incidents set last_activity_at = greatest(last_activity_at, %s), category = %s, title = %s, band = %s,
                 confidence = %s, severity = %s, primary_host = %s, primary_user = %s, hosts = %s, users = %s, sources = %s,
                 detectors = %s, techniques = %s, alert_count = %s, medium_at = %s, high_at = %s where id = %s""",

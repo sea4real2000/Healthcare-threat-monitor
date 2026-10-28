@@ -15,15 +15,16 @@ jobs:
       run:
         working-directory: web
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci
       - run: npm run typecheck
-      - run: npm test
+      - name: Tests, with how much of the library code they run (fails below the floor in vitest.config.ts)
+        run: npm run coverage
       - run: npm audit --omit=dev --audit-level=high
       - run: node ../scripts/check_copy.mjs
 
@@ -33,8 +34,8 @@ jobs:
       run:
         working-directory: engine
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
           cache: pip
@@ -42,7 +43,12 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Lint the Python code for errors and unused names
         run: pip install ruff==0.16.8 && ruff check --select E9,F . ../scripts ../appliance
-      - run: python -m unittest discover -s tests -v
+      - name: Tests, with how much of the engine they run (fails below the floor in .coveragerc)
+        run: |
+          pip install coverage==7.17.0
+          python -m coverage run -m unittest discover -s tests -v
+          python -m coverage combine
+          python -m coverage report
 
   database_and_end_to_end:
     runs-on: ubuntu-latest
@@ -63,7 +69,7 @@ jobs:
       SIEM_WEBHOOK_KEY: ci_only_siem_key_0123456789abcdef01234567
       HTM_API_URL: http://localhost:3000
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Create the public roles Supabase provides
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "create role anon nologin; create role authenticated nologin;" \
@@ -78,12 +84,12 @@ jobs:
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/lockdown.sql
       - name: The audit log refuses and detects tampering
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/audit_chain.sql
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
           cache: pip
@@ -97,6 +103,9 @@ jobs:
           for i in $(seq 1 30); do curl -sf http://localhost:3000/api/health && break; sleep 1; done
       - name: Short evaluation, which fails if an attack is missed
         working-directory: engine
+        # Python's development mode adds runtime checks on top of the engine's own assertions, which are on.
+        env:
+          PYTHONDEVMODE: '1'
         run: |
           pip install -r requirements.txt
           export HTM_COLLECTOR_SECRET=$(cd ../web && npm run --silent collector:key -- sim_hospital_01)
@@ -121,7 +130,7 @@ jobs:
   one_command_demo:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Start the demo from nothing and catch an attack
         run: sh scripts/demo_smoke.sh
       - name: Stop the demo
@@ -131,9 +140,32 @@ jobs:
   hospital_install:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Start a hospital installation from nothing, over HTTPS, and check it is locked down
         run: sh scripts/hospital_smoke.sh
+      - name: Stop the installation
+        if: always()
+        run: docker compose -f docker-compose.hospital.yml down --volumes
+
+  dynamic_analysis:
+    # ZAP scans a running hospital installation as a visitor and signed in as an administrator, attacking every
+    # page it finds, and fails on anything at medium risk or above not accepted with a reason in security/zap_accepted.tsv.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: The scan's check fails when it should
+        run: python3 scripts/zap_check.py --self-test
+      - name: Start a hospital installation
+        run: sh scripts/hospital_smoke.sh
+      - name: Scan it with ZAP
+        run: sh scripts/zap_scan.sh
+      - name: Keep the reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: zap-reports
+          path: zap/*/zap_report.*
+          retention-days: 14
       - name: Stop the installation
         if: always()
         run: docker compose -f docker-compose.hospital.yml down --volumes
@@ -142,11 +174,11 @@ jobs:
     # The appliance's own scripts. The full appliance is built and started in release.yml for each version.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check the appliance scripts
         run: |
           sudo apt-get update -q && sudo apt-get install -y -q shellcheck libxml2-utils
-          shellcheck -S warning appliance/build.sh appliance/files/bin/*
+          shellcheck -S warning appliance/build.sh appliance/files/bin/* scripts/*.sh
           python3 -m py_compile appliance/boot_test.py
           xmllint --noout appliance/files/appliance.ovf
 
@@ -160,8 +192,8 @@ jobs:
     env:
       CI_SECRET: ci_only_windows_secret_0123456789abcdef
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: The collector core's tests

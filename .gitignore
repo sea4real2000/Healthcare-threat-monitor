@@ -17,3 +17,5 @@ engine/worker.env
 # Build output of the Windows collector tests
 web/collectors/windows/tests/bin/
 web/collectors/windows/tests/obj/
+/zap/
+web/coverage/

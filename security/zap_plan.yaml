@@ -1,0 +1,43 @@
+# ZAP's scan of a running hospital installation: it crawls every page it can reach, watches every answer
+# (the passive scan), then attacks what it found (the active scan). The report is checked by
+# scripts/zap_check.py, which fails on any alert at or above the risk set there that is not listed,
+# with a reason, in security/zap_accepted.tsv.
+# Run by the dynamic_analysis job in .github/workflows/ci.yml. The target is the TARGET environment variable.
+env:
+  contexts:
+    - name: installation
+      urls: ["${TARGET}"]
+      includePaths: ["${TARGET}.*"]
+  parameters:
+    failOnError: true
+    progressToStdout: true
+jobs:
+  # Every request carries the cookie scripts/zap_scan.sh writes in place of COOKIE, so the same plan scans as a visitor
+  # (a cookie that opens nothing) and as a signed in administrator.
+  - type: replacer
+    rules:
+      - description: session
+        matchType: req_header
+        matchString: Cookie
+        replacementString: "${COOKIE}"
+  - type: requestor
+    requests:
+      - url: "${START}"
+  - type: spider
+    parameters: { context: installation, url: "${START}", maxDuration: 3 }
+  - type: passiveScan-wait
+    parameters: { maxDuration: 5 }
+  - type: activeScan
+    parameters: { context: installation, maxScanDurationInMins: 15, maxRuleDurationInMins: 2 }
+  - type: passiveScan-wait
+    parameters: { maxDuration: 5 }
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: "${REPORT_DIR}"
+      reportFile: zap_report.json
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: "${REPORT_DIR}"
+      reportFile: zap_report.html
