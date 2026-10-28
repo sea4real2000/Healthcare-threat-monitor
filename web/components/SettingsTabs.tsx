@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Translate } from '@/lib/settings';
 
 export function SettingsTabs({ t, current, admin }: { t: Translate; current: string; admin: boolean }) {
-  const tabs = admin ? ['settings', 'copy', 'images', 'users'] : ['settings'];
+  const tabs = admin ? ['settings', 'copy', 'images', 'users', 'backups'] : ['settings'];
   return (
     <nav className="tabs" aria-label={t('settings.tabs')}>
       {tabs.map((tab) => (

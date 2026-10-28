@@ -107,6 +107,16 @@ Each group of Windows computers shares one secret, kept in `C:\ProgramData\Healt
 | Sign in to the appliance itself | There is no remote sign in: no SSH or other remote shell is installed. The maintenance account `htm` signs in only at the installation's own keyboard or serial console, its first password is random, shown on the installation's screen, and must be changed at first sign in. The `root` account is locked. |
 | Start the computer from the USB installer to wipe or copy it | The installer erases nothing until a disk number and the word ERASE are typed at the computer's own keyboard. Physical access to the computer is outside this model. |
 
+### 12. Someone after a backup, or using one
+
+| Attempt | What limits it |
+| --- | --- |
+| Make or download a backup | Only a signed in administrator who passed the second factor, from the installation's own pages: a request whose Origin is another site is refused. Each backup made and downloaded is in the audit log. Finished backups are removed after `backups.keep_hours`. |
+| Read a backup file that was copied | It holds the database, the keys and the certificate authority's private key, locked with AES 256 GCM under a key made from the administrator's passphrase by scrypt (N = 2^17). The passphrase is never stored and must be at least `backups.passphrase_min_length` characters. Its strength is what protects the file. |
+| Change a backup and have it restored | GCM's tag covers every byte, so a changed or damaged file is refused before anything is restored, with nothing on the installation changed. |
+| Restore a backup onto a new installation to take it over | On an installation nobody has set up, a restore needs the setup code from its own screen, rate limited as on the first visit page, and the backup's passphrase. Once an administrator exists, only an administrator can restore. Every restore needs the word set in `backups.restore_confirm_word`, ends every session, and is in the audit log before and after. |
+| Use the backup service to reach more | It runs in its own container with no published port and no Docker access. It reads only requests in the folder it shares with the console, and file names inside a backup are checked so none can reach outside its own folder. |
+
 ## Known gaps
 
 - The console connects to the database with one privileged connection. A narrower role for reads would shrink the impact of a flaw in the console.
@@ -120,7 +130,9 @@ Each group of Windows computers shares one secret, kept in `C:\ProgramData\Healt
 - Rate limits trust the first address in the `X-Forwarded-For` header. Vercel sets that header itself. A console reached directly, without a proxy that sets it, can be given a false address, which weakens per address limits.
 - An administrator can point a records connection at any address and port the background service can reach, and the plain error messages say whether something answered there. This is limited to administrators and audited, but it lets an administrator probe the internal network from the platform's computer.
 - A records connection with encryption switched off sends the database password and the access log unencrypted across the hospital network. Encrypted connections have not been tested yet.
-- Whoever holds both the database and the secrets volume, or a backup of both, can unseal the records database password. Keep backups as carefully as the passwords themselves.
+- Whoever holds both the database and the secrets volume, or a backup made with commands rather than in the console, can unseal the records database password. Keep such backups as carefully as the passwords themselves. A backup made in the console is locked with its passphrase, but is only as safe as that passphrase.
+- While a backup is being made or restored, the database copy and the keys sit unlocked for a short time in the backup service's own folder on the installation's disk, which only that service can read. The same disk already holds them in the database and the secrets volume.
+- The fixed network address can be set by anyone at the installation's own keyboard, as on most network appliances. Physical access to the computer is outside this model.
 - On a hospital installation, rate limits rely on the `X-Forwarded-For` header set by the bundled Caddy server, which replaces the header a client sends unless told to trust it.
 - An attacker on the hospital network can forge syslog messages that appear to come from an accepted device's address, since UDP addresses are easily faked. Network controls that stop address spoofing are the only defence.
 - The receiver trusts Docker to pass on each device's own address. Docker Desktop and rootless Docker do not, and then every device looks like one. The console warns when this happens.

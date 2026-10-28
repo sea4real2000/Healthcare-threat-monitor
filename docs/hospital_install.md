@@ -9,7 +9,7 @@ You do not need to program, and you do not need to type commands. You need someo
 ## What you need
 
 - One computer that stays on, inside the hospital network, with at least 2 processors, 4 GB of memory and 20 GB of disk. Either a virtual machine on a server you already run, or a spare computer.
-- An address on the hospital network for it. Ask whoever runs the network to give it a fixed address, so the address staff use does not change.
+- An address on the hospital network for it that does not change, so the address staff use stays the same. Ask whoever runs the network to keep one address for it (a DHCP reservation), or set a fixed address on the installation's own screen: see [A fixed network address](#a-fixed-network-address).
 - Ports 80, 443 and 514 reachable on it from the hospital network. Staff browsers use 80 and 443, Windows computers send their events to 443, and routers, firewalls and servers send logs to 514.
 - If you will connect your patient record database or FHIR server: that computer must be allowed through any firewall to reach it.
 
@@ -56,7 +56,7 @@ The page asks for the setup code, your name and your email. Then choose a passwo
 
 The setup code works only until the first administrator is set up. After that, the page is closed and the screen stops showing the code. Anyone who can see the installation's screen can see the code, so set up the administrator straight after installing.
 
-If the screen warns that the address looks like VirtualBox's private network, the virtual machine's network is not Bridged: shut it down, change it as in 1A, and start it again. If the screen says the address changed, give the computer a fixed address; Windows computers set up before must be set up again.
+If the screen warns that the address looks like VirtualBox's private network, the virtual machine's network is not Bridged: shut it down, change it as in 1A, and start it again. If the screen says the address changed, give the computer an address that does not change, as in [A fixed network address](#a-fixed-network-address); Windows computers set up before must be set up again.
 
 ### The certificate warning
 
@@ -71,7 +71,20 @@ If you have your own certificate or a hospital domain name, the HTTPS settings a
 
 The screen shows the address and whether the platform is running, and refreshes by itself. You do not need to sign in to it for day to day use.
 
-Nothing needs to be typed on it. For maintenance only, such as backups, press **Alt** and **F2** on the installation's keyboard (in VirtualBox, **Right Ctrl** and **F2**, because VirtualBox catches Alt and F2) and sign in as `htm`. The first password is shown at the bottom of the screen from the very first start; type it without the space. It must be changed at first sign in, and the screen stops showing it once it has been. Keep the new password with your other administrator passwords.
+Nothing needs to be typed on it for day to day use. Two things can be done on it: pressing **N** sets a fixed network address (below), and for maintenance only, press **Alt** and **F2** on the installation's keyboard (in VirtualBox, **Right Ctrl** and **F2**, because VirtualBox catches Alt and F2) and sign in as `htm`. The first password is shown at the bottom of the screen from the very first start; type it without the space. It must be changed at first sign in, and the screen stops showing it once it has been. Keep the new password with your other administrator passwords.
+
+### A fixed network address
+
+The installation asks the network for its address (DHCP). If the network cannot keep the same address for it, set one on the installation's own screen:
+
+1. Ask whoever runs the network for a free address, the size of the network (such as `/24`), the router's address (the gateway) and the DNS servers.
+2. On the installation's screen, press **N**.
+3. Press **1**, then type the address with the network size, such as `192.168.1.50/24`, the router, such as `192.168.1.1`, and the DNS servers separated by spaces (press Enter to use the router). Each is checked before anything changes: the router must be on the same network as the address.
+4. Type **Y** to confirm.
+
+The new address takes effect straight away, and the platform starts again at it with a certificate made for it, which takes a minute or two. The screen then shows the new address and says it was set there. Windows computers set up at an earlier address must be set up again.
+
+To go back to an address from the network, press **N**, then **2**, then **Y**. Pressing **N** with nothing else changes nothing.
 
 ### If the first start seems stuck
 
@@ -216,19 +229,28 @@ This installation has no simulated hospital, no test attacks and no public demo 
 
 ## Backups
 
-Back up two things, and keep them together and somewhere safe. The secrets file unlocks the stored database passwords, FHIR secrets and keys, and every account's authenticator, and Windows group secrets are made from it, so treat it like a password.
+A backup holds everything: incidents, sources, settings, accounts, connections, the keys that unlock stored passwords and authenticators, and the installation's certificate authority. Restored onto a new installation, every account, connection and Windows computer keeps working.
 
-Backups are not yet made with clicks. On the appliance, sign in for maintenance (Alt and F2, user `htm`), then:
+To make one, sign in as an administrator, open **Settings**, **Backups**, choose a passphrase and press **Make the backup**. Then press **Download the backup** and copy the file somewhere off the installation, such as a USB stick or the hospital's file server.
+
+The backup is locked with its passphrase (AES 256 GCM, with a key made from the passphrase by scrypt). Nobody can open it without the passphrase, and the passphrase is not kept anywhere, so keep it with your other administrator passwords. A finished backup waits on the installation for 24 hours to be downloaded, then is removed; change this with the `backups.keep_hours` setting. Every backup made, downloaded and restored is in the audit log.
+
+To restore one, open **Settings**, **Backups**, **Restore a backup**, choose the file, type its passphrase and type `RESTORE` to confirm. Everything on the installation is replaced by the backup, everyone is signed out, and the installation starts again with the backup's keys, which takes a minute. Then sign in with an account from the backup.
+
+On a new installation nobody has set up yet, the first visit page offers **Restore its backup instead**, which asks for the setup code from the screen. This is how an installation moves to a new version or a new computer, below.
+
+A backup made by a newer version cannot be restored onto an older one: update the installation first. A backup made by an older version is brought up to date as it is restored.
+
+### Backups without the console
+
+If the console cannot start, a backup can still be made with commands. These copy the database and the secrets only, not the certificate authority. On the appliance, sign in for maintenance (Alt and F2, user `htm`), go to `/opt/htm` and put `sudo` before each command; on Docker, run them in the repository folder.
 
 ```bash
-cd /opt/htm
-sudo docker compose exec -T db pg_dump -U htm -d htm --format=custom > htm-database.dump
-sudo docker compose run --rm --no-deps -T secrets tar -C /secrets -cf - . > htm-secrets.tar
+docker compose exec -T db pg_dump -U htm -d htm --format=custom > htm-database.dump
+docker compose run --rm --no-deps -T secrets tar -C /secrets -cf - . > htm-secrets.tar
 ```
 
-Copy both files off the computer, for example to a USB stick, and delete them from it. On a Docker installation, run the same two commands in the repository folder.
-
-To restore onto a fresh installation, restore the secrets **first**, then the database. The first command removes everything the fresh installation made, so only use this on a new installation. On an appliance, sign in for maintenance, go to `/opt/htm` and put `sudo` before each command; on Docker, run them in the repository folder.
+Copy both files off the computer and delete them from it. To restore them onto a fresh installation, restore the secrets **first**, then the database. The first command removes everything the fresh installation made, so only use this on a new installation.
 
 ```bash
 docker compose down --volumes
@@ -240,11 +262,17 @@ docker compose up -d
 
 On Docker, put `HTM_HOSTNAME=10.0.0.5` before the last command, as when installing.
 
-A database backup restored without its secrets still opens, but every account must set up its authenticator again, every records database or FHIR connection must have its password, secret or key entered again, and every Windows computer must be set up again with a new installer. The connection says so on the Sources page.
-
 ## Updating
 
-Updating is not yet done with clicks. To move an appliance to a new version: take a backup as above, install the new version's appliance as a new virtual machine or on the computer, restore the backup onto it, then switch the old one off. Give the new one the old one's address, or Windows computers must be set up again.
+To move an appliance to a new version:
+
+1. On the old installation, make a backup and download it, as above.
+2. Install the new version's appliance as a new virtual machine or on the computer, and start it. Leave the old one running for now.
+3. Open the new installation's address. On the first visit page, choose **Restore its backup instead**, type the setup code from its screen, choose the backup file, type its passphrase and `RESTORE`.
+4. Sign in with your usual account and check the console.
+5. Switch the old installation off, then give the new one the old one's address: ask whoever runs the network to move the address to it, or set it on the new one's screen with **N** as in [A fixed network address](#a-fixed-network-address).
+
+Because the backup carries the certificate authority and the keys, Windows computers and browsers that trusted the old installation trust the new one, once it has the old address.
 
 On a Docker installation, in the repository folder:
 
@@ -274,13 +302,16 @@ Tested, end to end, on a Linux computer:
 - Windows: the console's installer, carrying this installation's root certificate, and the collector's core sending the platform real Windows event records through the HTTPS chain. Only the pinned authority was trusted; a different authority and an unpinned untrusted certificate were refused. Backups being deleted, the security log cleared and the shadow copy service stopped each raised an alert. A switched off group was refused. A Windows group's secret could not be used to send patient record entries.
 - FHIR against a test FHIR server: signing in with a key pair whose signed request the server verified, finding the token address, the preview, reading 240 records and then new ones, and refusing a next page link to another server.
 - The learning period: new values learned instead of reported, clear signs of attack still reported, finishing early with retraining, and everything in the audit log.
-- Backup, a full restore onto an empty installation, and updating with data kept.
+- Backups with clicks (`scripts/backup_smoke.sh`, on every pull request): a backup made through the console and downloaded, refused from another site, without signing in and with a short passphrase; the whole installation removed and a new one started with new keys and a new certificate authority; a wrong setup code and a wrong passphrase refused with nothing changed; the restore from the new installation's first visit page; and then the setting, the account, the keys and the certificate authority back, everyone signed out, the audit log verifying, the console and background service started again with the restored keys, and a computer that trusted the old certificate authority trusting the new installation with no warning.
+- A security scan with ZAP of a running installation, as a visitor and signed in as an administrator, on every pull request (`scripts/zap_scan.sh`). It fails on any alert of medium risk or higher that is not accepted, with a reason proven on every run, in `security/zap_accepted.tsv`.
+- The fixed network address on the appliance's screen, in QEMU, typed at the keyboard: a fixed address taking effect, the platform answering there, the screen saying so, and going back to an address from the network. This runs in the release workflow for each version.
+- Updating a Docker installation with data kept.
 
 Not yet tested:
 
 - The appliance in VirtualBox, VMware or Hyper-V themselves, and the USB installer on a real computer. They were tested in QEMU, which emulates a standard computer; each product's own virtual hardware, and each computer's firmware, can differ. The `.ova` and the Hyper-V file were built but not imported anywhere.
 - The appliance with the official images. The appliance tested here carried compatible stand ins, because the official images could not be downloaded in our test environment. The release workflow builds each version's appliance from the official images and runs the same tests on it, with KVM, before publishing; until that has run, treat the downloads as untested.
-- Backups, restoring and moving to a new version on the appliance itself. The commands are the ones tested on a Docker installation, run in `/opt/htm`.
+- Backups, restoring and moving to a new version on the appliance itself. The backup service is the same one tested on a Docker installation above, and it ships in the appliance, but a restore onto an appliance was not run in QEMU.
 - The maintenance sign in at the appliance's keyboard. Its first password is set and shown on the first start, but signing in with it was not tried.
 - HTTPS was tested with Caddy 2.6.2 from Ubuntu, not the official Caddy image, for the same reason. `scripts/hospital_smoke.sh` checks it against the official image on every pull request once the repository is on GitHub.
 - The Windows installer, scheduled task, audit policy and event reading on a real Windows computer. Windows was not available in our test environment. A check that does all of this on a Windows computer runs on every pull request once the repository is on GitHub; until it has run, treat them as untested.

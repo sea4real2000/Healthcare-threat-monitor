@@ -2,6 +2,29 @@
 
 Each version's notes say what changed, what an existing installation needs to do, and which publicly known vulnerabilities were fixed. Versions follow [Semantic Versioning](https://semver.org).
 
+## 0.9.0
+
+Backups and moving to a new version are done with clicks, the appliance can be given a fixed address on its own screen, and every pull request now scans a running installation for security problems.
+
+**New**
+
+- Backups with clicks, under **Settings**, **Backups**: a backup of everything, locked with a passphrase, to download; and a restore that replaces everything on the installation. A backup holds the certificate authority and keys too, so Windows computers and browsers that trusted the old installation trust the new one.
+- On a new installation, the first visit page can restore a backup from an earlier one with the setup code from its screen. This is how an appliance moves to a new version or a new computer.
+- A new backup service in `docker-compose.hospital.yml` does the work, and the console, background service and HTTPS service start again by themselves when a restore changes their keys or certificate authority.
+- A fixed network address, set on the appliance's screen by pressing **N**, for networks that cannot keep the same address for it. It can be switched back to an address from the network the same way.
+- A ZAP scan of a running hospital installation on every pull request, as a visitor and signed in as an administrator, which fails on any alert of medium risk or higher not accepted with a reason in `security/zap_accepted.tsv`. Each reason is proven again on every run.
+- Coverage reports for the console and engine tests, with a floor in CI that only goes up.
+- Runtime checks in the detection pipeline, and the end to end evaluation runs in Python's development mode.
+
+**Changed**
+
+- Dependencies: React 19.3.1, Vitest 5, newer engine packages, and the GitHub Actions used by CI at their current versions. Dependabot now groups React updates and holds back TypeScript 7, `@types/node` 26 and Node 26 until they are tested.
+
+**Upgrading**
+
+- Docker installations: `git pull` and `docker compose up -d --build` as before. Migration `0015` runs by itself and the new backup service starts with the rest.
+- Appliances: an appliance from 0.8 has no backup service, so it cannot make a backup with clicks. To move one with data to this version, use the commands under Backups without the console in the install guide, on the old appliance and then on the new one. From this version on, use Settings, Backups.
+
 ## 0.8.1
 
 The appliance's first start, found stuck on a real laptop running VirtualBox in slow mode, now recovers and explains itself.

@@ -1,6 +1,8 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Flash } from '@/components/ui';
 import { claimFirstRun } from '@/lib/actions';
+import { backupDir } from '@/lib/backups';
 import { firstRunPending } from '@/lib/firstRun';
 import { getCopy } from '@/lib/settings';
 
@@ -36,6 +38,11 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
           </button>
         </form>
         <p className="sub">{t('welcome.next')}</p>
+        {backupDir() ? (
+          <p className="sub">
+            <Link href="/welcome/restore">{t('backups.welcome_link')}</Link>
+          </p>
+        ) : null}
       </div>
     </main>
   );

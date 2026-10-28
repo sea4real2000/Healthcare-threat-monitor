@@ -291,7 +291,7 @@ class ForwardingTest(unittest.TestCase):
 
     def test_cef_line_is_escaped(self):
         cef = forwarding.to_cef(self.MESSAGE)
-        self.assertTrue(cef.startswith("CEF:0|HTM|Healthcare Threat Monitor|0.8|incident_opened|Ransomware behaviour on WS\\|ED=1|9|"))
+        self.assertTrue(cef.startswith(f"CEF:0|HTM|Healthcare Threat Monitor|{forwarding.PRODUCT_VERSION}|incident_opened|Ransomware behaviour on WS\\|ED=1|9|"))
         self.assertIn("cs1Label=band cs1=high", cef)
         self.assertIn("cs2=T1486,T1490", cef)
         self.assertEqual(forwarding.cef_extension("a=b\\c\nd"), "a\\=b\\\\c\\nd")

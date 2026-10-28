@@ -1,5 +1,6 @@
 # The console, built from the repository root:  docker build -f docker/console.Dockerfile .
-# Stages: deps installs packages, tools runs the setup scripts, build compiles, runtime serves.
+# Stages: deps installs packages, tools runs the setup scripts, backup makes and restores backups, build compiles,
+# runtime serves.
 
 FROM node:22-bookworm-slim AS deps
 WORKDIR /app/web
@@ -20,6 +21,21 @@ RUN install -d -o node -g node -m 0755 /secrets
 USER node
 CMD ["node", "scripts/demo_setup.mjs"]
 
+# Backups and restores with clicks, for a hospital's own installation (scripts/backup_service.mjs). Built on the
+# database's own image so its backup tools match the database version exactly.
+FROM postgres:16-alpine AS backup
+RUN apk add --no-cache nodejs
+WORKDIR /app/web
+COPY --from=tools /app/web/node_modules ./node_modules
+COPY --from=tools /app/web/package.json ./package.json
+COPY web/package.json ./package.full.json
+COPY web/scripts ./scripts
+COPY supabase/migrations /app/supabase/migrations
+# Runs as root inside its container: it reads the database password and the certificate authority, and hands
+# finished files to the console's user.
+ENTRYPOINT []
+CMD ["node", "scripts/backup_service.mjs"]
+
 FROM deps AS build
 COPY web/ ./
 ENV NEXT_OUTPUT=standalone NEXT_TELEMETRY_DISABLED=1
@@ -32,6 +48,7 @@ WORKDIR /app
 COPY --from=build /app/web/.next/standalone ./
 COPY --from=build /app/web/.next/static ./.next/static
 COPY docker/env-entry.sh /usr/local/bin/env-entry
+COPY docker/restart-on-change.sh /usr/local/bin/restart-on-change
 RUN mkdir -p .next/cache && chown node:node .next/cache
 USER node
 EXPOSE 3000

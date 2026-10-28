@@ -1,0 +1,80 @@
+-- 0015_backups.sql
+-- Backups and restores with clicks, made by the hospital installation's backup service (scripts/backup_service.mjs).
+-- Safe to run more than once.
+
+insert into settings (key, value, description) values
+  ('backups.keep_hours',            '24',        'Hours a finished backup waits on the installation to be downloaded before it is removed. Uploaded backups that were never restored are removed after the same time'),
+  ('backups.passphrase_min_length', '12',        'Shortest passphrase a backup can be locked with. The passphrase is never stored, so a lost one cannot be recovered'),
+  ('backups.max_upload_mb',         '20480',     'Largest backup file, in MB, that can be uploaded to restore'),
+  ('backups.follow_minutes',        '180',       'Minutes the backup page waits for a backup or restore to finish before saying it took too long'),
+  ('backups.restore_confirm_word',  '"RESTORE"', 'The word to type to confirm a restore, which replaces everything on this installation')
+on conflict (key) do nothing;
+
+insert into copy (key, value) values
+  ('settings.tab.backups', 'Backups'),
+  ('settings.group.backups', 'Backups'),
+  ('backups.lede', 'Make a backup to keep somewhere safe, or restore one. A backup holds everything: incidents, sources, settings, accounts, connections and the certificate authority Windows computers trust.'),
+  ('backups.not_available', 'Backups with clicks need the hospital installation''s backup service, which this installation does not have. See Backups in the install guide.'),
+  ('backups.service_down', 'The backup service is not running. Restarting the installation usually starts it again.'),
+  ('backups.make_title', 'Make a backup'),
+  ('backups.make_lede', 'Choose a passphrase to lock the backup with. Nobody can open the backup without it, and it is not kept anywhere, so write it down with your other administrator passwords. The backup waits here for {hours} hours to be downloaded. Copy it somewhere off this computer.'),
+  ('backups.passphrase', 'Passphrase'),
+  ('backups.passphrase_hint', 'Several words are easier to remember than symbols, and harder to guess.'),
+  ('backups.passphrase_again', 'The same passphrase again'),
+  ('backups.make', 'Make the backup'),
+  ('backups.made', 'The backup is ready. Download it and keep it with its passphrase.'),
+  ('backups.download', 'Download the backup'),
+  ('backups.ready_title', 'Backups ready to download'),
+  ('backups.ready_none', 'None at the moment.'),
+  ('backups.restore_title', 'Restore a backup'),
+  ('backups.restore_lede', 'Replaces everything on this installation with the backup: incidents, settings, accounts and connections. Everyone is signed out and signs in again with the accounts in the backup. Use this to move to a new version or a new computer, or after a loss.'),
+  ('backups.file', 'Backup file (.htmbackup)'),
+  ('backups.confirm', 'Type {word} to confirm'),
+  ('backups.confirm_hint', 'Everything now on this installation is replaced.'),
+  ('backups.restore', 'Restore the backup'),
+  ('backups.restored', 'Restored. The installation starts again with the backup''s keys, which takes a minute. Then sign in with an account from the backup.'),
+  ('backups.sign_in', 'Sign in'),
+  ('backups.code', 'Setup code, from this installation''s screen'),
+  ('backups.welcome_link', 'Moving from another installation? Restore its backup instead.'),
+  ('backups.welcome_title', 'Restore a backup'),
+  ('backups.welcome_lede', 'This new installation takes everything from a backup of the old one: incidents, settings, accounts, connections and its certificate authority, so Windows computers and browsers that trust the old one trust this one. Give this installation the old one''s address too.'),
+  ('backups.welcome_back', 'Set up a new administrator instead'),
+  ('backups.step.waiting', 'Waiting for the backup service.'),
+  ('backups.step.database', 'Copying the database.'),
+  ('backups.step.locking', 'Locking the backup with the passphrase.'),
+  ('backups.step.ready', 'Ready.'),
+  ('backups.step.unlocking', 'Unlocking the backup with the passphrase.'),
+  ('backups.step.updating', 'Bringing the restored database up to this version.'),
+  ('backups.step.secrets', 'Restoring the keys.'),
+  ('backups.step.certificate', 'Restoring the certificate authority.'),
+  ('backups.step.restored', 'Restored.'),
+  ('backups.step.uploading', 'Uploading the backup. A large one takes a few minutes.'),
+  ('backups.step.restarting', 'The installation is starting again.'),
+  ('backups.error.failed', 'That did not work. The installation''s backup service log says why.'),
+  ('backups.error.timeout', 'This is taking longer than expected. Look at this page again later.'),
+  ('backups.error.passphrase_too_short', 'The passphrase is too short.'),
+  ('backups.error.passphrases_differ', 'The two passphrases are not the same.'),
+  ('backups.error.no_file', 'Choose the backup file first.'),
+  ('backups.error.wrong_origin', 'That request did not come from this installation''s own page.'),
+  ('backups.error.admin_only', 'Only an administrator can do this.'),
+  ('backups.error.sign_in_required', 'Sign in first.'),
+  ('backups.error.backups_not_available', 'This installation has no backup service.'),
+  ('backups.error.backup_service_not_running', 'The backup service is not running. Restarting the installation usually starts it again.'),
+  ('backups.error.upload_too_large', 'The file is larger than the backups.max_upload_mb setting allows.'),
+  ('backups.error.upload_failed', 'The upload did not finish. Try again.'),
+  ('backups.error.no_upload', 'The uploaded file was not found. Upload it again.'),
+  ('backups.error.passphrase_missing', 'Type the backup''s passphrase.'),
+  ('backups.error.not_confirmed', 'Type the word shown to confirm.'),
+  ('backups.error.wrong_code', 'That setup code does not match the one on this installation''s screen.'),
+  ('backups.error.too_many_requests', 'Too many tries. Wait a minute and try again.'),
+  ('backups.error.wrong_passphrase', 'The passphrase is wrong, or the file was changed or damaged. Nothing was changed here.'),
+  ('backups.error.not_a_backup', 'This file is not a Healthcare Threat Monitor backup.'),
+  ('backups.error.newer_format', 'This backup was made by a newer version. Update this installation first.'),
+  ('backups.error.newer_version', 'This backup was made by a newer version. Update this installation first.'),
+  ('backups.error.damaged', 'The backup file is damaged.'),
+  ('backups.error.bad_name', 'The backup file is damaged.')
+on conflict (key) do nothing;
+
+select htm_lockdown();
+
+insert into schema_migrations (version) values ('0015_backups') on conflict do nothing;

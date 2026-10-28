@@ -21,7 +21,7 @@ import urllib.request
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 
-PRODUCT_VERSION = "0.8"
+PRODUCT_VERSION = "0.9"
 BAND_SEVERITY = {"high": 9, "medium": 6, "low": 3}
 BAND_SYSLOG = {"high": 2, "medium": 4, "low": 6}
 FACILITY_LOCAL4 = 20

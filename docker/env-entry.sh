@@ -9,7 +9,12 @@ if [ -n "${HTM_ENV_FILE:-}" ]; then
     exit 1
   fi
   set -a
+  # shellcheck disable=SC1090
   . "$HTM_ENV_FILE"
   set +a
+fi
+# Set HTM_RESTART_ON_CHANGE to the settings file to start again whenever it changes, as after a restore.
+if [ -n "${HTM_RESTART_ON_CHANGE:-}" ]; then
+  exec /usr/local/bin/restart-on-change "$HTM_RESTART_ON_CHANGE" -- "$@"
 fi
 exec "$@"

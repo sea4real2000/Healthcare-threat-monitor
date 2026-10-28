@@ -26,7 +26,7 @@ WORK=${WORK:-$(mktemp -d /var/tmp/htm-appliance.XXXXXX)}   # set to the folder o
 DISK_GB=${DISK_GB:-64}            # the size the virtual machine's disk grows to; it only uses what it fills
 VM_CPUS=${VM_CPUS:-2}
 VM_MEMORY_MB=${VM_MEMORY_MB:-4096}
-IMAGES=${IMAGES:-"healthcare-threat-monitor/tools:local healthcare-threat-monitor/console:local healthcare-threat-monitor/worker:local postgres:16-alpine caddy:2"}
+IMAGES=${IMAGES:-"healthcare-threat-monitor/tools:local healthcare-threat-monitor/console:local healthcare-threat-monitor/worker:local healthcare-threat-monitor/backup:local postgres:16-alpine caddy:2"}
 FIRMWARE=${FIRMWARE:-"linux-firmware-realtek linux-firmware-intel-misc"}   # network card firmware for real computers; empty for none
 KEEP_RAW=${KEEP_RAW:-}            # set to keep the raw disk images, for testing
 KEEP_SYSTEM=${KEEP_SYSTEM:-}      # set to keep the prepared system, to build again quickly with WORK
@@ -88,7 +88,7 @@ rm -rf "$ROOT/opt/htm"
 install -d "$ROOT/opt/htm/bin" "$ROOT/opt/htm/docker" "$ROOT/opt/htm/images" "$ROOT/etc/htm"
 install -m 755 "$REPO"/appliance/files/bin/* "$ROOT/opt/htm/bin/"
 install -m 644 "$REPO/docker-compose.hospital.yml" "$ROOT/opt/htm/"
-install -m 644 "$REPO/docker/Caddyfile" "$ROOT/opt/htm/docker/"
+install -m 644 "$REPO/docker/Caddyfile" "$REPO/docker/restart-on-change.sh" "$ROOT/opt/htm/docker/"
 echo "$VERSION" > "$ROOT/opt/htm/VERSION"
 # The list of images the first start must find in Docker before it starts the platform.
 : > "$ROOT/opt/htm/images.list"

@@ -14,6 +14,7 @@ COPY connectors ./connectors
 COPY receiver ./receiver
 COPY forwarding.py worker.py evaluate.py ./
 COPY docker-entry.sh /usr/local/bin/env-entry
+COPY restart-on-change.sh /usr/local/bin/restart-on-change
 RUN mkdir runs && chown htm runs
 USER htm
 

@@ -70,10 +70,15 @@ services:
     image: healthcare-threat-monitor/console:local
     environment:
       HTM_ENV_FILE: /run/htm/console.env
+      # Starts again by itself when its settings change, as after a backup is restored.
+      HTM_RESTART_ON_CHANGE: /run/htm/console.env
       # Where the console reads the installation's root certificate for Windows collector installers.
       HTM_TRUST_URL: http://https/root.crt
+      # Shared with the backup service, which makes and restores backups when an administrator asks.
+      HTM_BACKUP_DIR: /backups
     volumes:
       - secrets:/run/htm:ro
+      - backups:/backups
     depends_on:
       setup:
         condition: service_completed_successfully
@@ -83,8 +88,12 @@ services:
     image: caddy:2
     environment:
       HTM_HOSTNAME: ${HTM_HOSTNAME:-localhost}
+    # Starts again by itself when its certificate authority is replaced, as after a backup is restored.
+    entrypoint: ["/bin/sh", "/etc/caddy/restart-on-change.sh", "/data/caddy/pki/authorities/local/root.crt", "--"]
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./docker/restart-on-change.sh:/etc/caddy/restart-on-change.sh:ro
       - caddy_data:/data
       - caddy_config:/config
     ports:
@@ -101,6 +110,7 @@ services:
     image: healthcare-threat-monitor/worker:local
     environment:
       HTM_ENV_FILE: /run/htm/worker.env
+      HTM_RESTART_ON_CHANGE: /run/htm/worker.env
       HTM_API_URL: http://console:3000
     volumes:
       - secrets:/run/htm:ro
@@ -118,6 +128,7 @@ services:
     command: ["python", "-m", "receiver"]
     environment:
       HTM_ENV_FILE: /run/htm/worker.env
+      HTM_RESTART_ON_CHANGE: /run/htm/worker.env
       HTM_API_URL: http://console:3000
     volumes:
       - secrets:/run/htm:ro
@@ -129,8 +140,26 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # Makes and restores backups when an administrator asks for one in the console, under Settings, Backups.
+  # The only part that reads the database's files, the secrets and the certificate authority together.
+  backup:
+    build:
+      context: .
+      dockerfile: docker/console.Dockerfile
+      target: backup
+    image: healthcare-threat-monitor/backup:local
+    volumes:
+      - secrets:/secrets
+      - backups:/backups
+      - caddy_data:/caddy
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
 volumes:
   secrets:
   dbdata:
+  backups:
   caddy_data:
   caddy_config:

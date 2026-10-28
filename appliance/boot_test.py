@@ -229,6 +229,22 @@ def first_visit(base, code):
         except Exception:
             offered = False
         ok('the Windows page offers the certificate authority for browsers', offered)
+        # Backups with clicks: the appliance's backup service makes one, and the browser downloads it.
+        pg.goto(base + '/console/settings/backups', wait_until='domcontentloaded')
+        ok('the backups page says the backup service is running', 'not running' not in pg.inner_text('main'))
+        phrase = 'harbour lantern seven quiet fields'
+        pg.locator('input[name=passphrase]').first.fill(phrase); pg.locator('input[name=confirm]').first.fill(phrase)
+        pg.get_by_role('button', name='Make the backup').click()
+        try:
+            link = pg.wait_for_selector('[data-backup-download]', timeout=TIMEOUT_MS * 5)
+            with pg.expect_download() as d:
+                link.click()
+            d.value.save_as(f'{work}/appliance.htmbackup')
+            made = open(f'{work}/appliance.htmbackup', 'rb').read(10) == b'HTMBACKUP\n'
+        except Exception as error:
+            made = False
+            print('backup:', error, pg.inner_text('main')[-500:])
+        ok('the appliance makes a backup with clicks, and the browser downloads it', made)
         root = pg.request.get(base + '/api/trust/root')
         pem = root.text() if root.ok else ''
         with open(f'{work}/root.crt', 'w') as f:
