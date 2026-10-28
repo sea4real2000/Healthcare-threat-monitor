@@ -19,7 +19,9 @@ import base64, hashlib, hmac, json, os, re, shutil, socket, struct, subprocess, 
 MODE, DISK = sys.argv[1], sys.argv[2]
 FIRMWARE = sys.argv[3] if len(sys.argv) > 3 else 'bios'
 GUEST_NET, GUEST_IP = '192.168.76.0/24', '192.168.76.15'   # QEMU gives the guest the 15th address
+FIXED_IP = '192.168.76.20'   # the fixed address set on the appliance's screen, and its router and DNS in QEMU
 FORWARDS = {443: 18443, 80: 18080}   # the guest's port, and the port on this computer that reaches it
+FIXED_FORWARD = 18444   # this computer's port that reaches port 443 at the fixed address
 PROXY_PORT = 18128
 BOOT_TIMEOUT = int(os.environ.get('BOOT_TIMEOUT', '5400'))
 KVM = os.path.exists('/dev/kvm') and os.access('/dev/kvm', os.W_OK)
@@ -47,7 +49,8 @@ def qemu(disks, serial_log, usb=None):
     """disks: list of raw files attached as SATA disks. usb: a raw file attached as a USB stick."""
     cmd = ['qemu-system-x86_64', '-m', '4096', '-smp', '2', '-display', 'none', '-vga', 'std',
            '-serial', f'file:{serial_log}', '-qmp', f'unix:{work}/qmp,server,nowait',
-           '-netdev', f'user,id=n0,net={GUEST_NET},' + ','.join(f'hostfwd=tcp:127.0.0.1:{h}-:{g}' for g, h in FORWARDS.items()),
+           '-netdev', f'user,id=n0,net={GUEST_NET},' + ','.join(f'hostfwd=tcp:127.0.0.1:{h}-:{g}' for g, h in FORWARDS.items())
+           + f',hostfwd=tcp:127.0.0.1:{FIXED_FORWARD}-{FIXED_IP}:443',
            '-device', 'e1000,netdev=n0']
     cmd += ['-accel', 'kvm', '-cpu', 'host'] if KVM else ['-accel', 'tcg', '-cpu', 'max']
     if FIRMWARE == 'uefi':
@@ -98,9 +101,13 @@ def start_proxy():
             head += chunk
         line = head.split(b'\r\n', 1)[0].decode()
         m = re.match(r'CONNECT ([0-9.]+):(\d+) ', line)
-        if not m or m.group(1) != GUEST_IP or int(m.group(2)) not in FORWARDS:
+        if m and m.group(1) == GUEST_IP and int(m.group(2)) in FORWARDS:
+            port = FORWARDS[int(m.group(2))]
+        elif m and m.group(1) == FIXED_IP and m.group(2) == '443':
+            port = FIXED_FORWARD
+        else:
             client.sendall(b'HTTP/1.1 403 Forbidden\r\n\r\n'); client.close(); return
-        upstream = socket.create_connection(('127.0.0.1', FORWARDS[int(m.group(2))]))
+        upstream = socket.create_connection(('127.0.0.1', port))
         client.sendall(b'HTTP/1.1 200 Connection established\r\n\r\n')
         threading.Thread(target=pipe, args=(client, upstream), daemon=True).start()
         threading.Thread(target=pipe, args=(upstream, client), daemon=True).start()
@@ -127,7 +134,7 @@ def wait_serial(log, pattern, timeout, proc):
     return None
 
 
-KEYS = {' ': 'spc', '\n': 'ret'}
+KEYS = {' ': 'spc', '\n': 'ret', '.': 'dot', '/': 'slash'}
 
 
 def type_text(text):
@@ -138,6 +145,36 @@ def type_text(text):
         f.write(json.dumps({'execute': 'human-monitor-command', 'arguments': {'command-line': f'sendkey {key}'}}) + '\n'); f.flush(); f.readline()
         time.sleep(0.15)
     s.close()
+
+
+def answers(address, timeout):
+    """Waits for the platform to answer at this address, through the proxy, as a browser on the network would."""
+    end = time.time() + timeout
+    while time.time() < end:
+        r = subprocess.run(['curl', '-skf', '--max-time', '20', '--noproxy', '', '--proxy', f'http://127.0.0.1:{PROXY_PORT}',
+                            f'https://{address}/api/health'], capture_output=True)
+        if r.returncode == 0:
+            return True
+        time.sleep(10)
+    return False
+
+
+def network_check(log, proc, label):
+    """On the appliance's screen: N, a fixed address, its router and DNS, then back to automatic. Typed as a person would."""
+    for text in ('N', '1\n', f'{FIXED_IP}/24\n', '192.168.76.2\n', '192.168.76.3\n', 'Y\n'):
+        type_text(text); time.sleep(3)
+    m = wait_serial(log, r'htm-network: address now (\S+)', 120, proc)
+    ok(f'{label}: a fixed address set on the screen takes effect', bool(m) and m.group(1) == f'{FIXED_IP}/24', m.group(0) if m else 'nothing')
+    ok(f'{label}: the platform starts again and answers at the fixed address', answers(FIXED_IP, 900))
+    shown = wait_serial(log, r'https://' + re.escape(FIXED_IP) + r'[\s\S]*Fixed network address, set here', 300, proc)
+    ok(f'{label}: the screen shows the fixed address and says it was set there', bool(shown))
+    type_text('\n'); time.sleep(3)
+    for text in ('N', '2\n', 'Y\n'):
+        type_text(text); time.sleep(3)
+    m = wait_serial(log, r'htm-network: automatic address \(DHCP\)[\s\S]*htm-network: address now ' + re.escape(GUEST_IP), 120, proc)
+    ok(f'{label}: going back to automatic takes the address from the network again', bool(m) and GUEST_IP in m.group(0), m.group(0)[-80:] if m else 'nothing')
+    ok(f'{label}: and the platform answers at that address again', answers(GUEST_IP, 900))
+    type_text('\n')
 
 
 def stop(proc):
@@ -248,6 +285,8 @@ def appliance_check(disk, label):
                 break
             time.sleep(5)
         ok(f'{label}: once set up, the screen no longer shows the code', bool(after))
+        if label == 'virtual machine':
+            network_check(log, proc, label)
     finally:
         stop(proc)
 

@@ -1,0 +1,120 @@
+#!/bin/bash
+# Healthcare Threat Monitor appliance: a fixed network address, set on the computer's own screen.
+# Opened from the screen (htm-screen) by pressing N. For networks that cannot give this computer the same
+# address every time. The setting lives in /etc/systemd/network, ahead of the automatic one, so going back to
+# automatic only removes it. Each change is also written to the serial console.
+set -uo pipefail
+file=/etc/systemd/network/10-htm-fixed.network
+note() { if [ -c /dev/ttyS0 ]; then echo "htm-network: $*" > /dev/ttyS0 2>/dev/null || true; fi; }
+
+valid_address() { # an IPv4 address, each part 0 to 255
+  local IFS=. part count=0
+  [[ $1 =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]] || return 1
+  for part in $1; do [ "$part" -le 255 ] || return 1; count=$((count + 1)); done
+  [ $count = 4 ]
+}
+to_number() { local IFS=.; read -r a b c d <<< "$1"; echo $(( (a << 24) | (b << 16) | (c << 8) | d )); }
+same_network() { # $1 address, $2 prefix, $3 another address
+  local mask=$(( (0xFFFFFFFF << (32 - $2)) & 0xFFFFFFFF ))
+  [ $(( $(to_number "$1") & mask )) = $(( $(to_number "$3") & mask )) ]
+}
+current() { ip -4 -o addr show scope global 2>/dev/null | awk '{print $4; exit}'; }
+ask() { local answer; read -r -p "  $1" answer; echo "${answer//[[:space:]]/ }" | xargs; }
+yes_or_leave() { case "$(ask "$1")" in Y|y) ;; *) echo "  Nothing changed."; sleep 3; exit 0 ;; esac; }
+
+apply() { # $1 the fixed address being set, or nothing when going back to automatic
+  local old now=""
+  old=$(current)
+  networkctl reload
+  for link in $(networkctl list --no-legend 2>/dev/null | awk '$2 ~ /^(en|eth)/ {print $2}'); do networkctl reconfigure "$link"; done
+  echo "  Applying..."
+  for _ in $(seq 1 60); do
+    if [ -n "${1:-}" ]; then
+      ip -4 -o addr show scope global | grep -q " $1/" && now=$(ip -4 -o addr show scope global | awk -v a="$1/" 'index($4, a) == 1 {print $4; exit}')
+    else
+      now=$(ip -4 -o addr show scope global | awk -v a="$old" '$4 != a {print $4; exit}')
+    fi
+    [ -n "$now" ] && break
+    sleep 1
+  done
+  [ -n "$now" ] || now=$(current)
+  echo "  This computer's address is now: ${now:-none yet}"
+  note "address now ${now:-none}"
+  # The platform is started again at the new address, with a certificate made for it.
+  systemctl restart --no-block htm.service
+  echo
+  echo "  The platform starts again at this address. That takes a minute or two."
+}
+
+clear
+echo
+echo "  Healthcare Threat Monitor: network address"
+echo "  ================================================================"
+echo
+if [ -f "$file" ]; then
+  echo "  Now: a fixed address, set here."
+  sed -n 's/^\(Address\|Gateway\|DNS\)=/    \1: /p' "$file"
+else
+  echo "  Now: automatic. The network gives this computer its address (DHCP): $(current)"
+fi
+echo
+echo "  1  Set a fixed address"
+[ -f "$file" ] && echo "  2  Go back to automatic"
+echo "  Enter  Leave it as it is"
+echo
+choice=$(ask "Choose: ")
+
+case "$choice" in
+  1)
+    echo
+    echo "  Ask whoever runs the network for a free address, its network size, the router (gateway) and the DNS servers."
+    echo
+    while true; do
+      address=$(ask "Address with network size, such as 192.168.1.50/24: ")
+      [ -z "$address" ] && exit 0
+      prefix=${address#*/}; host=${address%/*}
+      [ "$prefix" = "$address" ] && prefix=24 && address="$host/24"
+      if valid_address "$host" && [[ $prefix =~ ^[0-9]+$ ]] && [ "$prefix" -ge 8 ] && [ "$prefix" -le 30 ]; then break; fi
+      echo "  That is not an address such as 192.168.1.50/24. Try again, or press Enter to leave it."
+    done
+    while true; do
+      gateway=$(ask "Router (gateway), such as 192.168.1.1: ")
+      [ -z "$gateway" ] && exit 0
+      if valid_address "$gateway" && same_network "$host" "$prefix" "$gateway" && [ "$gateway" != "$host" ]; then break; fi
+      echo "  The router must be another address on the same network as $address. Try again."
+    done
+    while true; do
+      dns=$(ask "DNS servers, separated by spaces (Enter to use the router): ")
+      [ -z "$dns" ] && dns=$gateway
+      good=yes
+      for server in $dns; do valid_address "$server" || good=no; done
+      [ $good = yes ] && break
+      echo "  Each DNS server must be an address such as 192.168.1.1. Try again."
+    done
+    echo
+    echo "  Address $address, router $gateway, DNS $dns"
+    yes_or_leave "Use this? Type Y and press Enter: "
+    {
+      echo "# Set on the appliance's screen (htm-network). Remove this file, or choose automatic there, to use DHCP again."
+      echo "[Match]"
+      echo "Name=en* eth*"
+      echo
+      echo "[Network]"
+      echo "Address=$address"
+      echo "Gateway=$gateway"
+      for server in $dns; do echo "DNS=$server"; done
+    } > "$file.new" && mv "$file.new" "$file"
+    note "fixed address $address, gateway $gateway, DNS $dns"
+    apply "$host"
+    ;;
+  2)
+    [ -f "$file" ] || exit 0
+    yes_or_leave "Go back to automatic? Type Y and press Enter: "
+    rm -f "$file"
+    note "automatic address (DHCP)"
+    apply ""
+    ;;
+  *) exit 0 ;;
+esac
+echo
+read -r -t 30 -p "  Press Enter to go back to the main screen. " _ || true

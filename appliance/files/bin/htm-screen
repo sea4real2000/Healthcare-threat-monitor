@@ -26,6 +26,8 @@ fi
 while true; do
   # The address the network gave this computer now, which is also what the platform is started with.
   ip=$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p')
+  [ -n "$ip" ] || ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+  fixed=no; [ -f /etc/systemd/network/10-htm-fixed.network ] && fixed=yes
   previous=$(cat /var/lib/htm/previous-address 2>/dev/null || true)
   detail=$(cat /run/htm-status 2>/dev/null || true)
   minutes=$(( $(cut -d. -f1 /proc/uptime) / 60 ))
@@ -113,7 +115,9 @@ while true; do
   if [ -n "$previous" ]; then
     echo
     echo "  The address changed from $previous. Windows computers set up before must be set up again."
-    echo "  Ask whoever runs the network to give this computer a fixed address."
+    if [ "$fixed" = no ]; then
+      echo "  Ask whoever runs the network to keep this address for this computer, or press N to fix it here."
+    fi
   fi
   if [ "$pending" = yes ] && [ -n "$code" ]; then
     echo
@@ -124,6 +128,11 @@ while true; do
   echo
   echo "  ----------------------------------------------------------------"
   echo "  You do not need to type anything here."
+  if [ "$fixed" = yes ]; then
+    echo "  Fixed network address, set here. To change it, press N."
+  else
+    echo "  To give this computer a fixed network address, press N."
+  fi
   if [ -n "$maintenance" ]; then
     echo "  Maintenance only: press $keys. User htm, first password $maintenance"
   else
@@ -148,5 +157,16 @@ while true; do
     { echo; echo "$screen"; } > /dev/ttyS0 2>/dev/null || true
   fi
   last=$screen
-  sleep 5
+  # Waits for a key instead of sleeping, so pressing N opens the network address setting.
+  key=""
+  read -rs -n 1 -t 5 key
+  # More than 128 means it waited the full 5 seconds. Anything else with no key means no keyboard: wait anyway.
+  waited=$?
+  [ "$waited" -gt 128 ] || [ -n "$key" ] || sleep 5
+  case "$key" in
+    n|N)
+      /opt/htm/bin/htm-network || true
+      last=""
+      ;;
+  esac
 done
