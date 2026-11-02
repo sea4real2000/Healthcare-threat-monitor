@@ -30,4 +30,4 @@ The full analysis, including known gaps, is in [docs/threat_model.md](docs/threa
 - Treat every value in `.env.example` like a password. Rotate `INGEST_SIGNING_KEY` if it is ever exposed. Every collector secret changes with it.
 - Turn on secret scanning and push protection in the repository settings.
 - Keep the database reachable only by the console and the background service.
-- This project is a research prototype running on simulated data. It has not been assessed for use with real patient information and has had no independent security review.
+- The project's own tests use simulated and sample data, and the platform has had no independent security review. A hospital that installs it should assess it for its own setting; the project is not told who installs it.

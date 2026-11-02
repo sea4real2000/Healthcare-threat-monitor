@@ -6,7 +6,7 @@
 
 An open source platform that watches the security logs of a hospital, detects threats such as ransomware and improper access to patient records, and keeps a human analyst in charge of every response.
 
-> **The demo is simulated.** The demo ships with a hospital simulator. No real patient, staff member or hospital is represented anywhere in this repository, and no real malware is used. A hospital installation watches the hospital's own systems instead. It is a research prototype: it has had no independent security review and has not been assessed for use with real patient information.
+> **The demo is simulated.** The demo ships with a hospital simulator. No real patient, staff member or hospital is represented anywhere in this repository, and no real malware is used. A hospital installation watches the hospital's own systems instead. It is open source software, provided as is under the Apache License 2.0. It has had no independent security review, and the project's own tests use simulated and sample data, so each hospital should try it on its own network and assess it for its own setting before relying on it. [What has and has not been tested](docs/hospital_install.md#what-has-and-has-not-been-tested) lists the detail.
 
 ## Try it in one command
 
@@ -50,7 +50,7 @@ The **Sources** page then shows whether each connection is working. For the firs
 | Step | What happens |
 | --- | --- |
 | Collect | Signed collectors send raw logs from ten kinds of hospital systems. Each record is mapped into one common event format. |
-| Detect | Twenty one editable rules catch known attack behaviour. Three anomaly models flag activity that departs from normal. |
+| Detect | Twenty two editable rules catch known attack behaviour. Three anomaly models flag activity that departs from normal. |
 | Correlate | Alerts about the same machine or person become one incident with one confidence score and a band: low, medium or high. |
 | Review | An analyst sees the evidence, the ATT&CK techniques and the features that drove each alert, then confirms or dismisses. |
 | Respond | On a high confidence incident an analyst can approve isolation of a machine. Incidents are forwarded to a SIEM as CEF and signed JSON. |
@@ -264,7 +264,7 @@ sent with three headers: `x-htm-key-id` (the collector id), `x-htm-timestamp` (U
 | `POST /api/siem/receive` | The built in SIEM receiver. Signed with `SIEM_WEBHOOK_KEY` |
 | `GET /api/health` | Health check, unsigned |
 
-`engine/simulator/client.py` is a complete reference client. To connect a real endpoint product, write a connector that polls the response actions route, acts on the endpoint, and acknowledges. The simulated connector in `engine/worker.py` does exactly this.
+Every route, with request and answer examples, is in [section 8 of the technical reference](docs/technical_reference.md#8-the-api). `engine/simulator/client.py` is a complete reference client. To connect a real endpoint product, write a connector that polls the response actions route, acts on the endpoint, and acknowledges. The simulated connector in `engine/worker.py` does exactly this.
 
 ## Tests
 
@@ -288,6 +288,7 @@ For each version, `.github/workflows/release.yml` builds the appliance, starts t
 
 - [CHANGELOG.md](CHANGELOG.md): what changed in each version, and the vulnerabilities each one fixed.
 - Bugs and feature requests: [GitHub issues](https://github.com/sea4real2000/Healthcare-threat-monitor/issues). Security problems: privately, as in [SECURITY.md](SECURITY.md).
+- [docs/technical_reference.md](docs/technical_reference.md): how every part works, every API with examples, every setting, security design and operations, in plain language ([PDF](docs/assets/healthcare_threat_monitor_technical_reference.pdf))
 - [docs/hospital_install.md](docs/hospital_install.md): installing in a hospital, connecting patient records, backups
 - [docs/detection.md](docs/detection.md): how rules, models, confidence and feedback work
 - [docs/threat_model.md](docs/threat_model.md): how the platform itself could be attacked, and what stands in the way

@@ -4,7 +4,7 @@ This guide puts Healthcare Threat Monitor on one computer inside your hospital n
 
 You do not need to program, and you do not need to type commands. You need someone who can import a virtual machine or start a computer from a USB stick, and, for the patient records connection, someone who looks after your patient record system.
 
-> This is a research prototype. It has had no independent security review and has not been assessed for use with real patient information. Read [Limits](#what-has-and-has-not-been-tested) before you rely on it.
+> This is open source software, provided as is under the Apache License 2.0. It has had no independent security review, and the project's own tests use simulated and sample data. Read [What has and has not been tested](#what-has-and-has-not-been-tested), and try it on your own network, before you rely on it.
 
 ## What you need
 

@@ -75,6 +75,11 @@ insert into copy (key, value) values
   ('backups.error.bad_name', 'The backup file is damaged.')
 on conflict (key) do nothing;
 
+-- The demo's footer said "Research prototype". The demo's own data is what is simulated. Changed only where nobody edited it.
+update copy set value = 'Demonstration. Every hospital, patient, member of staff and attack shown here is simulated. No real patient data is used anywhere in this demo.'
+  where key = 'landing.foot.disclaimer'
+    and value = 'Research prototype. Every hospital, patient, member of staff and attack shown here is simulated. No real patient data is used anywhere on this platform.';
+
 select htm_lockdown();
 
 insert into schema_migrations (version) values ('0015_backups') on conflict do nothing;
