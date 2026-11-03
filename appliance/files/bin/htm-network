@@ -32,6 +32,8 @@ apply() { # $1 the fixed address being set, or nothing when going back to automa
   for link in $links; do
     ip -4 addr flush dev "$link" scope global
     networkctl reconfigure "$link"
+    # Going back to automatic: ask the network for an address now, rather than waiting for the old lease.
+    [ -n "${1:-}" ] || networkctl renew "$link" 2>/dev/null || true
   done
   echo "  Applying..."
   for _ in $(seq 1 90); do
@@ -43,6 +45,7 @@ apply() { # $1 the fixed address being set, or nothing when going back to automa
     [ -n "$now" ] && break
     sleep 1
   done
+  [ -n "$now" ] || note "no address yet after 90 seconds: $(networkctl list --no-legend 2>/dev/null | tr -s ' ' | tr '\n' ';')"
   echo "  This computer's address is now: ${now:-none yet}"
   note "address now ${now:-none}"
   # The platform is started again at the new address, with a certificate made for it.

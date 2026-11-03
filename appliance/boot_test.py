@@ -173,7 +173,9 @@ def network_check(log, proc, label):
     for text in ('N', '2\n', 'Y\n'):
         type_text(text); time.sleep(3)
     m = wait_serial(log, r'htm-network: automatic address \(DHCP\)[\s\S]*htm-network: address now ' + re.escape(GUEST_IP), 120, proc)
-    ok(f'{label}: going back to automatic takes the address from the network again', bool(m) and GUEST_IP in m.group(0), m.group(0)[-80:] if m else 'nothing')
+    said = re.findall(r'htm-network: [^\r\n]*', open(log, errors='replace').read())
+    ok(f'{label}: going back to automatic takes the address from the network again', bool(m) and GUEST_IP in m.group(0),
+       m.group(0)[-80:] if m else 'the appliance said: ' + ' | '.join(said[-6:]))
     ok(f'{label}: and the platform answers at that address again', answers(GUEST_IP, 900))
     type_text('\n')
 
