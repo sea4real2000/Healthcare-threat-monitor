@@ -17,7 +17,7 @@ Other documents cover narrower ground and are linked where they matter:
 
 ## Contents
 
-1. [The platform in one page](#1-the-platform-in-one-page)
+1. [What it is, who it is for and how it is used](#1-what-it-is-who-it-is-for-and-how-it-is-used)
 2. [How the parts fit together](#2-how-the-parts-fit-together)
 3. [Following one log through the platform](#3-following-one-log-through-the-platform)
 4. [Collecting logs](#4-collecting-logs)
@@ -36,7 +36,15 @@ Other documents cover narrower ground and are linked where they matter:
 17. [Glossary](#17-glossary)
 18. [Appendix: every setting](#18-appendix-every-setting)
 
-## 1. The platform in one page
+## 1. What it is, who it is for and how it is used
+
+### The problem it solves
+
+Hospitals are attacked more than almost any other kind of organisation. Their systems cannot stop, so attackers expect a hospital under ransomware pressure to pay, and when an attack succeeds operations are cancelled and ambulances diverted. Patient records are also misused from inside: a member of staff opening the record of a celebrity, a neighbour or a colleague with no clinical reason.
+
+The warning signs of both are usually already in the hospital's own logs, days before the damage. Large hospitals pay for a security operations centre to read them. Most hospitals, especially smaller ones and those with fewer resources, cannot, so nobody reads the logs in time. Healthcare Threat Monitor does that reading for free, on the hospital's own computer, and puts each warning in front of a person with the evidence needed to decide.
+
+### The platform in one page
 
 Healthcare Threat Monitor watches the security logs a hospital already produces and warns early about three kinds of harm: ransomware and other attacks spreading through the network, staff opening patient records they have no reason to open, and medical devices behaving in ways they never should. A person reviews every warning and approves every response.
 
@@ -63,6 +71,47 @@ There are three ways to run it:
 | Demonstration | Anyone trying it | `docker compose up`, or hosted on Vercel and Supabase. Runs a simulated hospital with test attacks. |
 
 A hospital installation never runs the simulator, never accepts test attacks, has no public demo login, and needs sign in for every page.
+
+### Who uses it
+
+| Person | Account | What they use it for | Where in the console |
+| --- | --- | --- | --- |
+| The person who installs it, usually hospital IT | Administrator | Installs it, connects the log sources, sets up accounts, takes backups, changes settings | **Setup**, **Sources**, **Settings** |
+| The person who watches it: an IT officer, a security analyst, or a shared duty in a small hospital | Analyst | Reviews incidents, confirms or dismisses them, approves isolating a machine | **Overview**, **Incidents**, **Assets** |
+| The privacy or information governance officer | Analyst | Follows up incidents about patient records, which may lead to a conversation with a member of staff | **Incidents** |
+| Leadership, auditors and regulators | Analyst, or an exported report | See that the hospital watches its systems, what was found and what was done | **Compliance**, **Audit**, the audit export |
+| The hospital's central security system, where there is one | None: it receives forwarded incidents | Keeps incidents with alerts from its other tools | Set under **Settings**, SIEM forwarding |
+
+The platform does not need a dedicated security team. It is built so that one IT officer can watch a hospital, because only incidents worth a person's time reach the queue, and each one explains itself.
+
+### How it is used
+
+**The first day.** Install the appliance, open its address, set up the administrator with the code on its screen, then follow **Setup**: load the departments, staff, computers and patients from spreadsheets, connect the patient record system, send the routers' and firewalls' logs to it, and install the Windows collector on the hospital's computers.
+
+**The first week.** The learning period. The platform learns what is normal for each kind of log and reports only clear signs of attack. The person watching it checks **Sources** to see every log source arriving.
+
+**Every day.** The person watching it opens **Overview** and **Incidents**, ideally at the start of each shift, as staff check other systems. Each incident in the queue shows what happened, on which machine or by whom, the evidence, and why each detector raised it. They confirm what is real and dismiss what is expected, and the platform learns from each dismissal.
+
+**When an incident is high.** At least two independent sources agree something serious is happening, such as ransomware spreading. The analyst can approve isolating the machines it names, which the hospital's endpoint product carries out, and follows the hospital's own incident plan.
+
+**Every week or month.** The administrator downloads a backup and keeps it off the computer. Leadership and auditors look at **Compliance** and **Audit**. When a new version is released, the administrator moves to it with a backup and a restore.
+
+### Four examples of the features working together
+
+**Ransomware on a ward computer.** An email with a booby trapped attachment reaches a nurse (the email rule). Opening it makes Word start a script (the Office rule, from the Windows collector). The script copies passwords from memory (the credential dumping rule) and deletes the backup copies (the shadow copy rule). The firewall logs that computer scanning the network (the port scan rule, from the log receiver). Each alert joins one incident. Because the Windows log and the firewall log agree, it becomes high. The analyst sees the whole chain on one page, approves isolating the computer, and the connector carries it out. Every step is in the audit log, and the incident is forwarded to the hospital's SIEM.
+
+**A member of staff snooping.** A records clerk in one department opens the record of a patient flagged as high profile, who is being treated in another (the flagged patient rule, from the patient record connection). The record access model also notices he opened many more records than they or their peers usually do. Only the record system can see this, so the incident stays medium: it is reviewed by a person, never acted on automatically. The privacy officer follows it up under the hospital's own policy.
+
+**A medical device behaving strangely.** An infusion pump starts contacting an address on the internet (the device internet rule) and a host it has never contacted (the new peer rule), and its traffic model flags a burst far outside its normal pattern. The analyst sees the device, its department and what it contacted, and decides with the clinical engineering team what to do, because switching off a medical device is a clinical decision.
+
+**A false alarm, learned from.** A new backup program on the server starts renaming many files every night, which looks like ransomware (the mass rename rule). The analyst checks with IT, dismisses the incident as expected, and the rule now needs one and a half times as many renames on that server before it alerts again. The change is listed on the Rules page and can be undone.
+
+### What it is not
+
+- It is not antivirus and does not block anything by itself. It watches, explains and, with a person's approval, asks the hospital's endpoint product to isolate a machine.
+- It does not read clinical content. From the patient record system it reads only the access log: who opened which record, and when.
+- It does not replace the hospital's incident plan or its people. It gives them earlier warning and the evidence to act on.
+- It does not send anything outside the hospital unless an administrator sets up forwarding to the hospital's own systems.
 
 ## 2. How the parts fit together
 
