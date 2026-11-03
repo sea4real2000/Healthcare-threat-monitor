@@ -23,7 +23,7 @@ CMD ["node", "scripts/demo_setup.mjs"]
 
 # Backups and restores with clicks, for a hospital's own installation (scripts/backup_service.mjs). Built on the
 # database's own image so its backup tools match the database version exactly.
-FROM postgres:16-alpine AS backup
+FROM postgres:18-alpine AS backup
 RUN apk add --no-cache nodejs
 WORKDIR /app/web
 COPY --from=tools /app/web/node_modules ./node_modules
