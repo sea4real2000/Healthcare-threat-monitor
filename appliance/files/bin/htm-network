@@ -23,21 +23,26 @@ ask() { local answer; read -r -p "  $1" answer; echo "${answer//[[:space:]]/ }" 
 yes_or_leave() { case "$(ask "$1")" in Y|y) ;; *) echo "  Nothing changed."; sleep 3; exit 0 ;; esac; }
 
 apply() { # $1 the fixed address being set, or nothing when going back to automatic
-  local old now=""
-  old=$(current)
+  local now="" links
+  links=$(networkctl list --no-legend 2>/dev/null | awk '$2 ~ /^(en|eth)/ {print $2}')
   networkctl reload
-  for link in $(networkctl list --no-legend 2>/dev/null | awk '$2 ~ /^(en|eth)/ {print $2}'); do networkctl reconfigure "$link"; done
+  # The addresses the card has now are removed first. Otherwise an address from the network can stay beside
+  # a fixed one until its lease runs out, or a fixed one beside the new address from the network, and the
+  # computer would answer at both.
+  for link in $links; do
+    ip -4 addr flush dev "$link" scope global
+    networkctl reconfigure "$link"
+  done
   echo "  Applying..."
-  for _ in $(seq 1 60); do
+  for _ in $(seq 1 90); do
     if [ -n "${1:-}" ]; then
-      ip -4 -o addr show scope global | grep -q " $1/" && now=$(ip -4 -o addr show scope global | awk -v a="$1/" 'index($4, a) == 1 {print $4; exit}')
+      now=$(ip -4 -o addr show scope global | awk -v a="$1/" 'index($4, a) == 1 {print $4; exit}')
     else
-      now=$(ip -4 -o addr show scope global | awk -v a="$old" '$4 != a {print $4; exit}')
+      now=$(current)
     fi
     [ -n "$now" ] && break
     sleep 1
   done
-  [ -n "$now" ] || now=$(current)
   echo "  This computer's address is now: ${now:-none yet}"
   note "address now ${now:-none}"
   # The platform is started again at the new address, with a certificate made for it.

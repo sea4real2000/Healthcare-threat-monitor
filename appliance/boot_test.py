@@ -166,6 +166,7 @@ def network_check(log, proc, label):
     m = wait_serial(log, r'htm-network: address now (\S+)', 120, proc)
     ok(f'{label}: a fixed address set on the screen takes effect', bool(m) and m.group(1) == f'{FIXED_IP}/24', m.group(0) if m else 'nothing')
     ok(f'{label}: the platform starts again and answers at the fixed address', answers(FIXED_IP, 900))
+    ok(f'{label}: and no longer at the address the network gave it', not answers(GUEST_IP, 30))
     shown = wait_serial(log, r'https://' + re.escape(FIXED_IP) + r'[\s\S]*Fixed network address, set here', 300, proc)
     ok(f'{label}: the screen shows the fixed address and says it was set there', bool(shown))
     type_text('\n'); time.sleep(3)
