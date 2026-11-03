@@ -18,7 +18,9 @@ same_network() { # $1 address, $2 prefix, $3 another address
   local mask=$(( (0xFFFFFFFF << (32 - $2)) & 0xFFFFFFFF ))
   [ $(( $(to_number "$1") & mask )) = $(( $(to_number "$3") & mask )) ]
 }
-current() { ip -4 -o addr show scope global 2>/dev/null | awk '{print $4; exit}'; }
+# Only the computer's own network cards. Docker's internal network (docker0 and the bridges) is not an address
+# anyone on the hospital network can reach.
+current() { ip -4 -o addr show scope global 2>/dev/null | awk '$2 ~ /^(en|eth)/ {print $4; exit}'; }
 ask() { local answer; read -r -p "  $1" answer; echo "${answer//[[:space:]]/ }" | xargs; }
 yes_or_leave() { case "$(ask "$1")" in Y|y) ;; *) echo "  Nothing changed."; sleep 3; exit 0 ;; esac; }
 
@@ -38,7 +40,7 @@ apply() { # $1 the fixed address being set, or nothing when going back to automa
   echo "  Applying..."
   for _ in $(seq 1 90); do
     if [ -n "${1:-}" ]; then
-      now=$(ip -4 -o addr show scope global | awk -v a="$1/" 'index($4, a) == 1 {print $4; exit}')
+      now=$(ip -4 -o addr show scope global | awk -v a="$1/" '$2 ~ /^(en|eth)/ && index($4, a) == 1 {print $4; exit}')
     else
       now=$(current)
     fi
