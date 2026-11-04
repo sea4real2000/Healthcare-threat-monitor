@@ -80,6 +80,37 @@
     .hero { padding: 40px 0 56px; }
     header.top nav ul { gap: 14px; }
   }
+  /* The click through tour of the real console */
+  .tour { background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: 0 18px 50px rgba(11, 29, 85, 0.12); }
+  .tour-stage { position: relative; aspect-ratio: 1440 / 1000; background: #e8eefc; }
+  .tour-stage img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transition: opacity .25s ease; }
+  .tour-stage img.loading { opacity: .35; }
+  .hotspot { position: absolute; border: 0; padding: 0; margin: 0; background: transparent; border-radius: 10px; cursor: pointer; outline: 3px solid #ffb020; outline-offset: 4px; animation: pulse 1.6s ease-out infinite; }
+  .hotspot:focus-visible { outline-color: var(--navy); }
+  .hotspot .tip { position: absolute; left: 50%; bottom: calc(100% + 14px); transform: translateX(-50%); white-space: nowrap; background: #ffb020; color: #1c1300; font-weight: 800; font-size: 14px; padding: 6px 12px; border-radius: 999px; box-shadow: 0 6px 18px rgba(0,0,0,.18); pointer-events: none; }
+  .hotspot.left .tip { left: calc(100% + 16px); bottom: auto; top: 50%; transform: translateY(-50%); }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,176,32,.65); } 100% { box-shadow: 0 0 0 18px rgba(255,176,32,0); } }
+  @media (prefers-reduced-motion: reduce) { .hotspot { animation: none; } .tour-stage img { transition: none; } }
+  .tour-panel { display: grid; grid-template-columns: 1fr auto; gap: 18px 24px; align-items: center; padding: 20px 24px; border-top: 1px solid var(--line); }
+  .tour-panel .count { color: var(--blue); font-weight: 800; font-size: 13px; letter-spacing: .4px; text-transform: uppercase; margin: 0 0 2px; }
+  .tour-panel h3 { margin: 0 0 4px; font-size: 20px; }
+  .tour-panel p.say { margin: 0; color: var(--muted); max-width: 720px; }
+  .tour-nav { display: flex; gap: 10px; }
+  .tour-nav button { font: inherit; font-weight: 700; font-size: 15px; padding: 11px 20px; border-radius: 999px; cursor: pointer; border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
+  .tour-nav button.next { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .tour-nav button:disabled { opacity: .4; cursor: default; }
+  .tour-dots { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap; }
+  .tour-dots button { width: 26px; height: 6px; border: 0; padding: 0; border-radius: 3px; background: var(--line); cursor: pointer; }
+  .tour-dots button[aria-current="step"] { background: var(--blue); }
+  .tour-full { grid-column: 1 / -1; font-size: 14px; display: none; }
+  @media (max-width: 760px) { .tour-full { display: inline; } }
+  .tour-note { font-size: 14px; color: var(--muted); margin-top: 10px; }
+  @media (max-width: 760px) {
+    .tour-panel { grid-template-columns: 1fr; padding: 16px; }
+    .tour-nav button { flex: 1; }
+    .hotspot .tip { font-size: 12px; padding: 4px 9px; bottom: calc(100% + 8px); }
+    .hotspot.left .tip { left: calc(100% + 10px); }
+  }
 </style>
 </head>
 <body>
@@ -89,6 +120,7 @@
     <nav>
       <a class="brand" href="#">Healthcare Threat Monitor</a>
       <ul>
+        <li><a href="#tour">Tour</a></li>
         <li><a href="#install">Install</a></li>
         <li><a href="#watches">What it watches</a></li>
         <li><a href="#status">Status</a></li>
@@ -101,6 +133,7 @@
       <p class="lede">Healthcare Threat Monitor watches a hospital's security logs, catches ransomware and improper access to patient records, and keeps a person in charge of every response. It runs on the hospital's own computer and is installed with clicks.</p>
       <div class="buttons">
         <a class="button primary" href="https://github.com/sea4real2000/Healthcare-threat-monitor/releases/latest">Download the latest version</a>
+        <a class="button ghost" href="#tour">Take the two minute tour</a>
         <a class="button ghost" href="hospital_install.html">Read the install guide</a>
       </div>
     </div>
@@ -123,6 +156,31 @@
       <div class="card"><h3>Review</h3><p>Related warnings are joined into one incident with the evidence behind it, so an analyst sees the whole story at once.</p></div>
       <div class="card"><h3>Respond</h3><p>A person approves every action, such as cutting a computer off the network. Every step is kept in a tamper evident audit log.</p></div>
     </div>
+  </section>
+
+  <section id="tour">
+    <h2>See it catch an attack</h2>
+    <p class="intro">Click through the real console as it catches a simulated ransomware attack, from the first warning to the infected computer being cut off. Click the highlighted part of each screen, or use the buttons and your arrow keys.</p>
+    <div class="tour" data-tour>
+      <div class="tour-stage">
+        <img alt="" width="1440" height="1000" data-shot>
+        <button type="button" class="hotspot" data-hotspot hidden><span class="tip" data-tip></span></button>
+      </div>
+      <div class="tour-panel">
+        <div aria-live="polite">
+          <p class="count" data-count></p>
+          <h3 data-title></h3>
+          <p class="say" data-say></p>
+        </div>
+        <div class="tour-nav">
+          <button type="button" data-back>Back</button>
+          <button type="button" class="next" data-next>Next</button>
+        </div>
+        <div class="tour-dots" data-dots role="group" aria-label="Steps"></div>
+        <a class="tour-full" data-full target="_blank" rel="noopener">Open this screen full size</a>
+      </div>
+    </div>
+    <p class="tour-note">Every screen is from the real console, captured during one run of its built in ransomware scenario against a simulated hospital, with nothing staged. No real patient, member of staff or hospital appears. The demo plays attacks four times faster than real time.</p>
   </section>
 
   <section id="install">
@@ -223,5 +281,73 @@
   </div>
 </footer>
 
+<script>
+// The click through tour. Each step is one screen of the real console; "click" is the part a person would click
+// there, as a box on the 1440 by 1000 screen, which moves the tour on.
+(function () {
+  var steps = [
+    { shot: '01_signin', title: 'Open the demo', say: 'The demo runs on any computer with Docker, with one command, and opens without an account. Its visitor can launch a simulated attack and isolate a machine; everything else is read only.', click: [511, 742, 418, 34], tip: 'Try the demo' },
+    { shot: '02_overview', title: 'A hospital, being watched', say: 'Ten kinds of log are arriving from a simulated hospital of 11 departments, 197 staff and 168 devices: about 6,700 events an hour. The detection service is running and no incident is open.', click: [16, 356, 212, 38], tip: 'Scenarios', left: true },
+    { shot: '03_scenarios', title: 'Launch an attack', say: 'A scenario writes the log records a real attack would leave behind, with no malware involved. This one is a phishing email whose attachment runs a script on a ward computer, steals passwords, spreads, deletes backups and then encrypts files.', click: [301, 461, 142, 34], tip: 'Launch scenario' },
+    { shot: '04_queue_medium', title: 'The first warning, 26 seconds in', say: 'An email security log shows a risky attachment delivered, and the computer starts PowerShell from Word. Two sources agree, so an incident opens at medium, 74%, in the analyst queue.' },
+    { shot: '05_queue_high', title: 'High, eight seconds later', say: 'The computer looks up a domain nobody in the hospital has used before. Three independent log sources now agree, and the incident becomes high: the only band that lets a person approve isolating a machine.', click: [301, 327, 279, 19], tip: 'Open the incident' },
+    { shot: '06_incident', title: 'Everything on one page', say: 'Why each detector raised its alert, how confident it is, and the attacker technique it matches in MITRE ATT&CK. The machine involved is named, with the button to cut it off the network.', click: [1093, 738, 149, 34], tip: 'Isolate WSLAB007' },
+    { shot: '07_isolated', title: 'Isolated in three seconds', say: 'The approval is recorded with the person who gave it. The endpoint connector carries it out and reports back, and only then is the machine shown as isolated. Nothing is ever isolated without a person.' },
+    { shot: '08_timeline', title: 'The evidence, in order', say: 'Each record that led to the incident, from the email arriving to the script starting and the strange lookup, so the analyst and later an auditor can see exactly what happened and when.' },
+    { shot: '09_outcome', title: 'Contained', say: 'Isolation came before the attack reached its file encryption stage, so the run ends as contained. When isolation comes later, the scenario shows that too: speed matters.' },
+    { shot: '10_audit', title: 'A record nobody can quietly change', say: 'Every alert, approval and isolation is in the audit log. Each entry carries a hash of the one before it, so changing or removing any past entry breaks the chain, and the page says whether the chain is intact.' },
+    { shot: '11_compliance', title: 'Evidence for the regulator', say: 'The same activity, mapped to the HIPAA Security Rule, the NIST Cybersecurity Framework and the HHS 405(d) practices, with live counts as evidence. It supports these safeguards; it does not make a hospital compliant by itself.' }
+  ];
+  var root = document.querySelector('[data-tour]');
+  if (!root) return;
+  var img = root.querySelector('[data-shot]'), spot = root.querySelector('[data-hotspot]'), tip = root.querySelector('[data-tip]');
+  var count = root.querySelector('[data-count]'), title = root.querySelector('[data-title]'), say = root.querySelector('[data-say]');
+  var full = root.querySelector('[data-full]');
+  var back = root.querySelector('[data-back]'), next = root.querySelector('[data-next]'), dots = root.querySelector('[data-dots]');
+  var src = function (i) { return 'assets/tour/' + steps[i].shot + '.webp'; };
+  var at = 0;
+  steps.forEach(function (s, i) {
+    var d = document.createElement('button');
+    d.type = 'button'; d.setAttribute('aria-label', 'Step ' + (i + 1) + ': ' + s.title);
+    d.addEventListener('click', function () { show(i); });
+    dots.appendChild(d);
+  });
+  function show(i) {
+    at = Math.max(0, Math.min(steps.length - 1, i));
+    var s = steps[at];
+    img.classList.add('loading');
+    img.onload = function () { img.classList.remove('loading'); };
+    img.src = src(at);
+    full.href = src(at);
+    img.alt = s.title + '. ' + s.say;
+    count.textContent = 'Step ' + (at + 1) + ' of ' + steps.length;
+    title.textContent = s.title;
+    say.textContent = s.say;
+    if (s.click) {
+      spot.hidden = false;
+      spot.style.left = (s.click[0] / 14.4) + '%'; spot.style.top = (s.click[1] / 10) + '%';
+      spot.style.width = (s.click[2] / 14.4) + '%'; spot.style.height = (s.click[3] / 10) + '%';
+      spot.classList.toggle('left', !!s.left);
+      tip.textContent = 'Click: ' + s.tip;
+      spot.setAttribute('aria-label', 'Click ' + s.tip + ' to go to the next step');
+    } else {
+      spot.hidden = true;
+    }
+    back.disabled = at === 0;
+    next.textContent = at === steps.length - 1 ? 'Start again' : 'Next';
+    Array.prototype.forEach.call(dots.children, function (d, j) { if (j === at) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
+    if (at + 1 < steps.length) { var pre = new Image(); pre.src = src(at + 1); }
+  }
+  spot.addEventListener('click', function () { show(at + 1); });
+  next.addEventListener('click', function () { show(at === steps.length - 1 ? 0 : at + 1); });
+  back.addEventListener('click', function () { show(at - 1); });
+  root.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight') { show(at + 1); e.preventDefault(); }
+    if (e.key === 'ArrowLeft') { show(at - 1); e.preventDefault(); }
+  });
+  root.tabIndex = -1;
+  show(0);
+})();
+</script>
 </body>
 </html>
