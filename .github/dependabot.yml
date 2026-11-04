@@ -1,6 +1,9 @@
 # Weekly pull requests when a dependency has a newer version, so known vulnerabilities are fixed quickly.
-# Major versions of the language runtimes and TypeScript are moved by hand, with the code changed and
-# tested to match: Node.js stays on its long term support line (22), and its type definitions with it.
+# Major versions of the language runtimes, the framework, the database and its client are moved by hand,
+# with the code changed and tested to match: Node.js stays on its long term support line (22) with its type
+# definitions, Next.js and the postgres client stay on their current major, and PostgreSQL stays on 16,
+# because a new major version of PostgreSQL cannot read an existing installation's database files without a
+# full export and import.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -14,6 +17,10 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+      - dependency-name: next
+        update-types: ["version-update:semver-major"]
+      - dependency-name: postgres
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: pip
     directory: /engine
     schedule: { interval: weekly }
@@ -25,4 +32,7 @@ updates:
     schedule: { interval: weekly }
     ignore:
       - dependency-name: node
+        update-types: ["version-update:semver-major"]
+      # The backup service's image must match the database's version exactly (docker-compose.hospital.yml).
+      - dependency-name: postgres
         update-types: ["version-update:semver-major"]
