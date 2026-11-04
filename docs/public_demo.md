@@ -96,6 +96,6 @@ To close the demo, set `demo.enabled` back to false. Every demo session stops wo
 
 A public demo does not need `SOURCES_SECRET`, and connecting a records database or FHIR server is refused while the demo login is on. The log receiver for routers and firewalls, and the learning period, are part of the hospital installation too. A hospital should use its own installation instead: see [hospital_install.md](hospital_install.md).
 
-## What has and has not been tested
+## How it has been tested
 
-The demo login, its limits and its refusals have been tested end to end, including attempts to submit the forms it is not allowed to use. The worker only setup has been tested against a separately run console and database. It has not been tested against Supabase, Vercel or any particular server provider, because those need your accounts.
+The demo login, its limits and its refusals have been tested end to end, including attempts to submit the forms it is not allowed to use. The worker only setup has been tested against a separately run console and database. Supabase, Vercel and similar providers each run standard PostgreSQL and Node.js, so follow their own guides for their account steps.

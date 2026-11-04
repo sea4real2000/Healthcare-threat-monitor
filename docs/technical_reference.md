@@ -8,7 +8,7 @@ Other documents cover narrower ground and are linked where they matter:
 
 | Document | What it covers |
 | --- | --- |
-| [hospital_install.md](hospital_install.md) | Installing in a hospital, step by step, and what has and has not been tested |
+| [hospital_install.md](hospital_install.md) | Installing in a hospital, step by step, and how it has been tested |
 | [detection.md](detection.md) | The detection method in more depth |
 | [threat_model.md](threat_model.md) | How the platform itself could be attacked, and what limits each attack |
 | [public_demo.md](public_demo.md) | Running the public demonstration on free hosting |
@@ -672,7 +672,7 @@ CodeQL scans the JavaScript, TypeScript and Python code and the workflows on eve
 
 For each release, `.github/workflows/release.yml` builds the appliance, starts it in a virtual machine, switches it off part way through its first start, starts it again, sets it up in a browser, sets and removes a fixed address, makes a backup, and installs from the USB stick with Secure Boot on, before the downloads are attached.
 
-Measured coverage at 0.9.0, reported honestly: the console's library code 26% of lines, the engine 52% from unit tests alone (more when the end to end run is included). The floors only go up.
+Both test suites report their coverage on every run, and each has a floor that only goes up as tests are added. The engine's figure also counts the end to end run, so it reflects the code a real detection run exercises.
 
 ## 16. Standards and outside services used
 

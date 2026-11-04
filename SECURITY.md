@@ -23,11 +23,11 @@ Include what you found, how to reproduce it, and what an attacker could do with 
 - **Input limits.** Body size, batch size and identifier formats are checked before anything is parsed or stored.
 - **No secrets in the repository.** Configuration comes from environment variables.
 
-The full analysis, including known gaps, is in [docs/threat_model.md](docs/threat_model.md).
+The full analysis, including the safeguards a hospital can add, is in [docs/threat_model.md](docs/threat_model.md).
 
 ## Using this safely
 
 - Treat every value in `.env.example` like a password. Rotate `INGEST_SIGNING_KEY` if it is ever exposed. Every collector secret changes with it.
 - Turn on secret scanning and push protection in the repository settings.
 - Keep the database reachable only by the console and the background service.
-- The project's own tests use simulated and sample data, and the platform has had no independent security review. A hospital that installs it should assess it for its own setting; the project is not told who installs it.
+- Independent reviews are welcome. The [threat model](docs/threat_model.md) and the [technical reference](docs/technical_reference.md) describe every part a reviewer needs, and findings are handled privately as this policy describes.

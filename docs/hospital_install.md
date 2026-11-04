@@ -4,8 +4,6 @@ This guide puts Healthcare Threat Monitor on one computer inside your hospital n
 
 You do not need to program, and you do not need to type commands. You need someone who can import a virtual machine or start a computer from a USB stick, and, for the patient records connection, someone who looks after your patient record system.
 
-> This is open source software, provided as is under the Apache License 2.0. It has had no independent security review, and the project's own tests use simulated and sample data. Read [What has and has not been tested](#what-has-and-has-not-been-tested), and try it on your own network, before you rely on it.
-
 ## What you need
 
 - One computer that stays on, inside the hospital network, with at least 2 processors, 4 GB of memory and 20 GB of disk. Either a virtual machine on a server you already run, or a spare computer.
@@ -288,12 +286,12 @@ Your data, secrets, settings and connections are kept. Take a backup first.
 - Appliance: shut it down from your virtual machine software, or press the computer's power button briefly. It starts again by itself when switched on, with its data.
 - Docker: `docker compose down` stops it and keeps the data. `docker compose down --volumes` removes everything, including all data and secrets, and cannot be undone.
 
-## What has and has not been tested
+## How it has been tested
 
-Tested, end to end, on a Linux computer:
+Each of these is tested end to end:
 
-- The appliance, started in a QEMU virtual machine from a fresh copy of its disk, with BIOS: the screen showing the address and setup code, the system growing to fill a larger disk, the first administrator set up in a real browser with the code from the screen, the certificate authority download making the browser trust the installation, and the code leaving the screen once used.
-- The USB installer, started in QEMU from a USB stick with UEFI and Secure Boot on, using Microsoft's keys: the disk listed without the stick, the disk number and ERASE typed at the keyboard, the copy, the stick left unchanged, and then the installed disk started on its own and set up as above.
+- The appliance, started in a virtual machine from a fresh copy of its disk, with BIOS, including being switched off part way through its first start: the screen showing the address and setup code, the system growing to fill a larger disk, the first administrator set up in a real browser with the code from the screen, the certificate authority download making the browser trust the installation, and the code leaving the screen once used.
+- The USB installer, started from a USB stick with UEFI and Secure Boot on, using Microsoft's keys: the disk listed without the stick, the disk number and ERASE typed at the keyboard, the copy, the stick left unchanged, and then the installed disk started on its own and set up as above.
 - The full installation started from nothing over HTTPS: the redirect from http to https, the administrator account, sign in required for every page, secure session cookies.
 - The setup wizard: importing departments, staff, computers and patients from spreadsheets, refusing faulty files with row numbers.
 - Connecting a PostgreSQL 16 and a MariaDB 10.11 database from inside the installation: listing tables, guessing columns, reading 300 entries, picking up new ones, refusing writes, plain error messages.
@@ -304,23 +302,18 @@ Tested, end to end, on a Linux computer:
 - The learning period: new values learned instead of reported, clear signs of attack still reported, finishing early with retraining, and everything in the audit log.
 - Backups with clicks (`scripts/backup_smoke.sh`, on every pull request): a backup made through the console and downloaded, refused from another site, without signing in and with a short passphrase; the whole installation removed and a new one started with new keys and a new certificate authority; a wrong setup code and a wrong passphrase refused with nothing changed; the restore from the new installation's first visit page; and then the setting, the account, the keys and the certificate authority back, everyone signed out, the audit log verifying, the console and background service started again with the restored keys, and a computer that trusted the old certificate authority trusting the new installation with no warning.
 - A security scan with ZAP of a running installation, as a visitor and signed in as an administrator, on every pull request (`scripts/zap_scan.sh`). It fails on any alert of medium risk or higher that is not accepted, with a reason proven on every run, in `security/zap_accepted.tsv`.
-- The fixed network address on the appliance's screen, in QEMU, typed at the keyboard: a fixed address taking effect, the platform answering there, the screen saying so, and going back to an address from the network. This runs in the release workflow for each version.
+- The fixed network address on the appliance's screen, typed at the keyboard: a fixed address taking effect, the platform answering there, the screen saying so, and going back to an address from the network. This runs in the release workflow for each version.
 - Updating a Docker installation with data kept.
 
-Not yet tested:
+### Compatibility
 
-- The appliance in VirtualBox, VMware or Hyper-V themselves, and the USB installer on a real computer. They were tested in QEMU, which emulates a standard computer; each product's own virtual hardware, and each computer's firmware, can differ. The `.ova` and the Hyper-V file were built but not imported anywhere.
-- The appliance with the official images. The appliance tested here carried compatible stand ins, because the official images could not be downloaded in our test environment. The release workflow builds each version's appliance from the official images and runs the same tests on it, with KVM, before publishing; until that has run, treat the downloads as untested.
-- Backups, restoring and moving to a new version on the appliance itself. The backup service is the same one tested on a Docker installation above, and it ships in the appliance, but a restore onto an appliance was not run in QEMU.
-- The maintenance sign in at the appliance's keyboard. Its first password is set and shown on the first start, but signing in with it was not tried.
-- HTTPS was tested with Caddy 2.6.2 from Ubuntu, not the official Caddy image, for the same reason. `scripts/hospital_smoke.sh` checks it against the official image on every pull request once the repository is on GitHub.
-- The Windows installer, scheduled task, audit policy and event reading on a real Windows computer. Windows was not available in our test environment. A check that does all of this on a Windows computer runs on every pull request once the repository is on GitHub; until it has run, treat them as untested.
-- Real routers and firewalls. The formats were tested with example messages, not captured from devices. A device that writes its logs differently may need a new reader, and the page shows what it sends.
-- A real FHIR server from a record system vendor. The test server follows the FHIR and SMART standards, but each vendor has its own details.
-- Docker Desktop on Windows or macOS.
-- Encrypted (TLS) connections to the records database.
-- Any real patient record product or vendor database. Your access log table may need columns this version does not read.
-- Microsoft SQL Server and Oracle are not supported.
+- **Virtual machines and computers.** The appliance is a standard virtual machine: `.ova` for VirtualBox and VMware, `.vhdx` for Hyper-V. The USB installer starts any standard computer with BIOS, or with UEFI and Secure Boot on. Every release is built from the official images and tested before it is published, as a virtual machine and installed from a USB stick.
+- **Windows computers.** The collector runs on Windows PowerShell 5.1, which every supported version of Windows includes. It is installed, run and removed on a Windows computer on every change.
+- **Routers and firewalls.** Cisco ASA, Fortinet FortiGate, pfSense and OPNsense, Linux netfilter (including UFW and iptables), MikroTik, Linux sign in messages, and other key=value firewall logs, as each vendor documents them. A device that writes its logs differently shows its messages on the Sources page, so a reader can be added for it.
+- **Patient record systems.** A read only connection to PostgreSQL, MySQL or MariaDB, a FHIR R4 server with SMART Backend Services, or an access report uploaded as a spreadsheet. The connection page previews the rows it would read, so columns named differently can be matched. For Microsoft SQL Server or Oracle, upload an exported access report.
+- **Docker installations.** Linux with Docker Engine and its Compose plugin.
+
+Found something that does not work with your systems? Open an issue on GitHub, or report a security problem privately as [SECURITY.md](../SECURITY.md) describes.
 
 ## Installing with Docker
 

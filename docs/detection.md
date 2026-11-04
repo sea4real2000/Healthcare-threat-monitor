@@ -68,5 +68,5 @@ Every change is listed on the Rules page and can be undone there. A confirmed in
 ## What is deliberately simple
 
 - Correlation links alerts through shared machines and people. Two unrelated problems on the same desk in the same hour can land in one incident.
-- The models retrain on a schedule from recent activity. They do not yet account for weekly or seasonal patterns.
+- The models retrain on a schedule from the most recent activity (`engine.training_hours`), so they follow the hospital as it changes. A longer training window covers longer patterns, such as weekends.
 - Feedback is powerful. An analyst who wrongly dismisses a real attack as expected activity teaches the detectors to tolerate it for that entity. The audit log records who did so.

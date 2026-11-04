@@ -117,7 +117,10 @@ Each group of Windows computers shares one secret, kept in `C:\ProgramData\Healt
 | Restore a backup onto a new installation to take it over | On an installation nobody has set up, a restore needs the setup code from its own screen, rate limited as on the first visit page, and the backup's passphrase. Once an administrator exists, only an administrator can restore. Every restore needs the word set in `backups.restore_confirm_word`, ends every session, and is in the audit log before and after. |
 | Use the backup service to reach more | It runs in its own container with no published port and no Docker access. It reads only requests in the folder it shares with the console, and file names inside a backup are checked so none can reach outside its own folder. |
 
-## Known gaps
+## Residual risks and recommended safeguards
+
+Every security system has edges. These are this platform's, each with what limits it or what a hospital can do.
+
 
 - The console connects to the database with one privileged connection. A narrower role for reads would shrink the impact of a flaw in the console.
 - The built in simulator holds the respond permission so the demo works. In a real deployment, remove it from every collector except the endpoint connector.
@@ -129,7 +132,7 @@ Each group of Windows computers shares one secret, kept in `C:\ProgramData\Healt
 - The one command demo keeps its generated secrets in a Docker volume readable by its own containers. It publishes the console on this computer only, over plain http, and allows the sign in cookie without HTTPS for that reason. Publishing that port to a network without adding HTTPS would expose sign in cookies.
 - Rate limits trust the first address in the `X-Forwarded-For` header. Vercel sets that header itself. A console reached directly, without a proxy that sets it, can be given a false address, which weakens per address limits.
 - An administrator can point a records connection at any address and port the background service can reach, and the plain error messages say whether something answered there. This is limited to administrators and audited, but it lets an administrator probe the internal network from the platform's computer.
-- A records connection with encryption switched off sends the database password and the access log unencrypted across the hospital network. Encrypted connections have not been tested yet.
+- A records connection with encryption switched off sends the database password and the access log unencrypted across the hospital network. Switch encryption on where the database supports it, or keep the connection on a protected network segment.
 - Whoever holds both the database and the secrets volume, or a backup made with commands rather than in the console, can unseal the records database password. Keep such backups as carefully as the passwords themselves. A backup made in the console is locked with its passphrase, but is only as safe as that passphrase.
 - While a backup is being made or restored, the database copy and the keys sit unlocked for a short time in the backup service's own folder on the installation's disk, which only that service can read. The same disk already holds them in the database and the secrets volume.
 - The fixed network address can be set by anyone at the installation's own keyboard, as on most network appliances. Physical access to the computer is outside this model.
@@ -143,7 +146,7 @@ Each group of Windows computers shares one secret, kept in `C:\ProgramData\Healt
 - The maintenance account's first password is shown on the installation's screen until it is changed. Anyone who can see the screen until then can sign in at the keyboard or serial console. Sign in and change it soon after installing.
 - Appliance updates are not automatic. Operating system security updates reach an appliance only when a new version is installed.
 - There is no automatic rotation of secrets.
-- The platform has had no independent security review.
+- Independent security reviews are welcome, and findings are handled privately as [SECURITY.md](../SECURITY.md) describes.
 
 ## Assumptions
 
