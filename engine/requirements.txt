@@ -2,7 +2,7 @@
 # Detection needs a Postgres driver, NumPy and scikit-learn.
 # Connections to a hospital's records database use psycopg for PostgreSQL and PyMySQL for MySQL and
 # MariaDB, and cryptography to unseal the stored database password.
-psycopg[binary]>=3.3.6,<4
+psycopg[binary]>=3.3.8,<4
 numpy>=2.5.4,<3
 scikit-learn>=1.9.1,<2
 PyMySQL>=1.2.3,<2
