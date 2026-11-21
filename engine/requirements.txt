@@ -3,7 +3,7 @@
 # Connections to a hospital's records database use psycopg for PostgreSQL and PyMySQL for MySQL and
 # MariaDB, and cryptography to unseal the stored database password.
 psycopg[binary]>=3.3.6,<4
-numpy>=2.5.4,<3
+numpy>=2.5.5,<3
 scikit-learn>=1.9.1,<2
 PyMySQL>=1.2.3,<2
 cryptography>=50.0.2,<51
